@@ -1,11 +1,85 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { getAllItems } from "../authApi/authApi";
+import apiClient from "../../utils/apiClient";
 
 export default function LostSomething() {
   const navigate = useNavigate();
 
+  const [stats, setStats] = useState({
+    totalItems: 0,
+    recoveredItems: 0,
+    students: 0,
+  });
+
+  //  Fetch stats on load
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      const [itemsRes, usersRes] = await Promise.all([
+        getAllItems(),
+        apiClient.get("/users/count"),
+      ]);
+
+      //  ITEMS 
+      const items =
+        itemsRes.data?.data?.items ||
+        itemsRes.data?.items ||
+        itemsRes.data?.data ||
+        itemsRes.data ||
+        [];
+
+      const totalItems = items.length;
+
+      const recoveredItems = items.filter(
+        (item) =>
+          item.find === true ||
+          item.status === "CLAIMED" ||
+          item.itemStatus === "CLAIMED"
+      ).length;
+
+      // -------- USERS --------
+      const students =
+        usersRes.data?.count ||
+        usersRes.data?.data?.count ||
+        0;
+
+      setStats({
+        totalItems,
+        recoveredItems,
+        students,
+      });
+    } catch (error) {
+      console.error("Stats error:", error);
+
+      // fallback (if user API fails)
+      try {
+        const res = await getAllItems();
+        const items =
+          res.data?.data?.items ||
+          res.data?.items ||
+          res.data?.data ||
+          res.data ||
+          [];
+
+        setStats({
+          totalItems: items.length,
+          recoveredItems: items.filter((i) => i.find === true).length,
+          students: 0,
+        });
+      } catch (err) {
+        console.error("Fallback failed:", err);
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-linear-to-r from-[#0b1d3a] via-[#0f2a4d] to-[#0b1d3a] text-white flex items-center justify-center px-4">
       <div className="max-w-7xl w-full text-center">
+
         {/* Top Badge */}
         <div className="inline-flex items-center gap-2 border border-blue-400/30 bg-blue-500/10 px-4 py-1 rounded-full text-sm text-blue-300 mb-6">
           <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
@@ -26,7 +100,6 @@ export default function LostSomething() {
 
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
-          {/* Browse Items */}
           <button
             onClick={() => navigate("/browse")}
             className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg"
@@ -34,7 +107,6 @@ export default function LostSomething() {
             🔍 Browse Items
           </button>
 
-          {/* Report Item */}
           <button
             onClick={() => navigate("/report")}
             className="border border-gray-500 hover:border-blue-400 hover:text-blue-400 transition px-6 py-3 rounded-xl font-semibold flex items-center gap-2"
@@ -43,39 +115,45 @@ export default function LostSomething() {
           </button>
         </div>
 
-        {/* Stats */}
+        {/* ✅ Stats (Design SAME, Data Dynamic) */}
         <div className="flex justify-center mt-10">
           <div className="w-full max-w-3xl bg-[#0f2747]/80 backdrop-blur-sm rounded-xl px-4 py-4">
             <div className="grid grid-cols-3 text-center items-center">
+
+              {/* Items Listed */}
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-blue-400 leading-none">
-                  24+
+                  {stats.totalItems}+
                 </h2>
                 <p className="text-gray-400 text-[11px] sm:text-xs mt-1">
                   Items Listed
                 </p>
               </div>
 
+              {/* Items Recovered */}
               <div className="border-x border-white/10">
                 <h2 className="text-xl sm:text-2xl font-bold text-blue-400 leading-none">
-                  18+
+                  {stats.recoveredItems}+
                 </h2>
                 <p className="text-gray-400 text-[11px] sm:text-xs mt-1">
                   Items Recovered
                 </p>
               </div>
 
+              {/* Students Registered */}
               <div>
                 <h2 className="text-xl sm:text-2xl font-bold text-blue-400 leading-none">
-                  6K+
+                  {stats.students}+
                 </h2>
                 <p className="text-gray-400 text-[11px] sm:text-xs mt-1">
                   Students Registered
                 </p>
               </div>
+
             </div>
           </div>
         </div>
+
       </div>
     </div>
   );

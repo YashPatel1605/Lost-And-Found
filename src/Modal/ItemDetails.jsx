@@ -1,22 +1,27 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { submitClaim, markItemAsClaimed } from "../component/authApi/authApi";
 
-export default function ItemDetails({ item, onClose }) {
+export default function ItemDetails({ item, onClose, refreshItems }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isChecked, setIsChecked] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const isOwner = user.email == item.email || user.id == item.reportedBy._id;
-  console.log("owner",isOwner)
-  console.log("user",user)
-  console.log("item",item)
-
+  
+  const isOwner = 
+    user?.email === item?.email ||            
+    user?.id === item?.reportedBy?._id ||     
+    user?.id === item?.claimedBy?._id ||       
+    user?.email === item?.claimedBy?.email;
 
   const [isClaimed, setIsClaimed] = useState(
     item?.status === "CLAIMED" || item?.itemStatus === "CLAIMED",
   );
   const [isUpdating, setIsUpdating] = useState(false);
+ 
+  useEffect(() => {
+    setIsClaimed(item?.status === "CLAIMED" || item?.itemStatus === "CLAIMED");
+  }, [item?.status, item?.itemStatus]);
 
   if (!item) return null;
 
@@ -24,8 +29,15 @@ export default function ItemDetails({ item, onClose }) {
   const handleSubmitClaim = async () => {
     try {
       setIsSubmitting(true);
-      await submitClaim(item._id);
+      await submitClaim(item._id);     
+     
+      setIsClaimed(true);
       toast.success("Claim request submitted successfully! 🎉");
+
+      if (refreshItems) {
+        refreshItems();
+      }
+
       setTimeout(() => onClose(), 1500);
     } catch (error) {
       const errorMsg =
@@ -36,16 +48,22 @@ export default function ItemDetails({ item, onClose }) {
     }
   };
 
-  // ✅ TOGGLE CLAIMED - WITH API CALL
+  // TOGGLE CLAIMED - WITH API CALL
   const handleToggleClaimed = async () => {
     try {
       setIsUpdating(true);
       await markItemAsClaimed(item._id);
-      // console.log("Api Call", newStatus);
+      
+      // ✅ INSTANTLY update UI
       setIsClaimed(!isClaimed);
       toast.success(
         !isClaimed ? "Item marked as claimed ✅" : "Claim removed ❌",
       );
+
+      // ✅ Background refresh (no 'await')
+      if (refreshItems) {
+        refreshItems();
+      }
     } catch (error) {
       console.error("Toggle claimed error:", error);
       const errorMsg =
@@ -172,6 +190,33 @@ export default function ItemDetails({ item, onClose }) {
               </div>
             </div>
 
+            {/* ✅ CLAIMED USER DATA SECTION */}
+            {isClaimed && item?.claimedBy && (
+              <div className="flex flex-col gap-2 border-t border-green-200 pt-3 bg-green-50/50 -mx-3 px-3 rounded-b-lg">
+                <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
+                  ✅ Claim Requested By
+                </p>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-green-600 text-white flex items-center justify-center font-bold shadow-inner text-sm">
+                      {(item.claimedBy?.name || "U").charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-800 text-xs">
+                        {item.claimedBy?.name || "You"}
+                      </p>
+                      <p className="text-[11px] text-gray-500">
+                        {item.claimedBy?.email || ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-xs font-bold text-green-600 bg-green-100 px-2 py-1 rounded-lg">
+                    Claimed ✓
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* CLAIMED USER + TOGGLE - Only for Owner */}
             {item?.reportedBy && isOwner && (
               <div className="flex flex-col gap-2 border-t border-blue-100 pt-3">
@@ -184,10 +229,10 @@ export default function ItemDetails({ item, onClose }) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800 text-xs">
-                        {item.reportedBy?.name }
+                        {item.reportedBy?.name}
                       </p>
                       <p className="text-[11px] text-gray-500">
-                        {item.reportedBy?.email }
+                        {item.reportedBy?.email}
                       </p>
                     </div>
                   </div>
@@ -195,14 +240,14 @@ export default function ItemDetails({ item, onClose }) {
                     📞 {item.reportedBy?.contactNumber || "No Number"}
                   </div>
                 </div>
-                {/* ✅ TOGGLE BUTTON WITH API */}
-                {item.find ? (                
+
+                {item.find ? (
                   <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded-lg flex items-center justify-center">
                     <span className="text-xs font-bold text-green-700">
                       CLAIMED
                     </span>
                   </div>
-                ) : (        
+                ) : (
                   <div className="flex items-center justify-between bg-white/50 px-3 py-2 rounded-lg border border-blue-100 mt-2">
                     <span className="text-xs font-semibold text-gray-700">
                       Mark as Claimed
@@ -222,30 +267,11 @@ export default function ItemDetails({ item, onClose }) {
                     </button>
                   </div>
                 )}
-
-                {/* <div className="flex items-center justify-between bg-white/50 px-3 py-2 rounded-lg border border-blue-100 mt-2">
-                  <span className="text-xs font-semibold text-gray-700">
-                    Mark as Claimed
-                  </span>
-                  <button
-                    onClick={handleToggleClaimed}
-                    disabled={isUpdating}
-                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${
-                      isClaimed ? "bg-green-500" : "bg-gray-300"
-                    } ${isUpdating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                        isClaimed ? "translate-x-5" : "translate-x-1"
-                      }`}
-                    />
-                  </button>
-                </div> */}
               </div>
             )}
 
-            {/* SUBMIT CLAIM - For Non-Owner */}
-            {!isOwner && (
+            {/* SUBMIT CLAIM - Hide if already claimed */}
+            {!isOwner && !isClaimed && (
               <div className="flex flex-col gap-3">
                 <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
                   <input
@@ -267,6 +293,15 @@ export default function ItemDetails({ item, onClose }) {
                 >
                   {isSubmitting ? "Processing..." : "Submit Claim"}
                 </button>
+              </div>
+            )}
+
+            {/* ALREADY CLAIMED MESSAGE */}
+            {!isOwner && isClaimed && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                <p className="text-xs font-bold text-green-700 text-center">
+                  ✅ You have successfully claimed this item
+                </p>
               </div>
             )}
           </div>

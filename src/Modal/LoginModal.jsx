@@ -3,12 +3,11 @@ import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { registerUser, loginUser } from "../component/authApi/authApi";
 import { toast } from "react-toastify";
-import ForgotPassword from "../component/ForgetPassword/ForgetPassword";
+import { forgotPassword } from "../component/authApi/authApi";
 
 const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
-  const [view, setView] = useState("login"); 
+  const [view, setView] = useState("login");
 
-  // Validation Schemas
   const SignupSchema = Yup.object({
     name: Yup.string().required("Full Name is required"),
     enrollment: Yup.string()
@@ -47,20 +46,24 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         };
         res = await registerUser(payload);
         if (res?.data?.status === false) return toast.error(res.data.message);
-        
+
         toast.success("Signup Successful! Please log in. ✅");
         setView("login");
         resetForm();
       } else {
-        res = await loginUser({ email: values.email, password: values.password });      
+        res = await loginUser({ email: values.email, password: values.password });
         const data = res?.data?.data || res?.data;
         const token = data?.token;
-        if (token) localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(data));
-        toast.success("Welcome back! ✅");
-        resetForm();
-        if (onLoginSuccess) onLoginSuccess();
-        onClose();
+        
+        if (token) {
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(data));
+          window.dispatchEvent(new Event("authChange"));
+          toast.success("Welcome back! ✅");
+          resetForm();
+          if (onLoginSuccess) onLoginSuccess();
+          onClose();
+        }
       }
     } catch (error) {
       const msg = error.response?.data?.message || "Authentication failed ❌";
@@ -80,7 +83,6 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         className="w-full max-w-xl bg-white rounded-3xl shadow-2xl p-6 sm:p-8 overflow-hidden transition-all"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
             {view === "forgot" ? "Reset Access" : "Welcome to CampusFind"}
@@ -90,12 +92,10 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
           </button>
         </div>
 
-        {/* View Content */}
         {view === "forgot" ? (
           <ForgotPassword onBack={() => setView("login")} />
         ) : (
           <>
-            {/* Tab Toggle */}
             <div className="flex bg-gray-100 rounded-2xl p-1.5 mb-6 border border-gray-200">
               <button
                 onClick={() => setView("login")}
@@ -183,7 +183,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
                     disabled={isSubmitting}
                     className="w-full bg-blue-600 text-white py-3.5 rounded-2xl font-bold hover:bg-blue-700 disabled:bg-blue-300 transition-all shadow-lg shadow-blue-100"
                   >
-                    {isSubmitting ? "Processing..." : view === "signup" ? "Create Account" : "Sign In"}
+                    {isSubmitting ? "Processing..." : view === "signup" ? "Create Account" : "Login"}
                   </button>
                 </Form>
               )}
