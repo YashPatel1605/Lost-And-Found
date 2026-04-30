@@ -14,6 +14,9 @@ import EditItem from "./component/EditItem/EditItem";
 // import ResetPassword from "./component/ResetPassword/ResetPassword";
 import ResetPassword from "./component/ResetPassword/ResetPassword";
 import ProtectedRoute from "./component/ProtectedRoute/ProtectedRoute";
+import ContactAdmin from "./component/Footer/ContactAdmin";
+import FAQ from "./component/Footer/FAQ";
+import PrivacyPolicy from "./component/Footer/Privacy";
 
 function App() {
   return (
@@ -22,7 +25,7 @@ function App() {
       <ToastContainer position="top-right" autoClose={2000} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/items" element={<Browse />} />
+        <Route path="/listings" element={<Browse />} />
         <Route
           path="/report"
           element={
@@ -42,6 +45,11 @@ function App() {
         {/* <Route path="/item/:id" element={<ItemDetails/>} /> */}
         <Route path="/edit-item/:id" element={<EditItem />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/contact" element={<ContactAdmin />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+
+        
         {/* <Route path="/login" element={<Login />} /> */}
         {/* <Route path="/signup" element={<Signup />} /> */}
       </Routes>
