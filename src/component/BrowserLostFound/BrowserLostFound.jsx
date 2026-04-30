@@ -1,4 +1,18 @@
-export default function BrowserLostFound() {
+import { useState } from "react";
+
+export default function BrowserLostFound({ onSearch }) {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleSearch = () => {
+    onSearch?.(inputValue.trim());
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
     <section className="w-full bg-linear-to-r from-[#0b1d3a] via-[#0f2a4d] to-[#0b1d3a] py-16 px-4">
       
@@ -20,10 +34,16 @@ export default function BrowserLostFound() {
           <input
             type="text"
             placeholder="Search by title, description, location..."
+            value={inputValue}
+            onChange={(event) => setInputValue(event.target.value)}
+            onKeyDown={handleKeyDown}
             className="w-full flex-1 px-4 py-3 rounded-xl bg-[#1e2f4d] text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
           />
 
-          <button className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-xl">
+          <button
+            onClick={handleSearch}
+            className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-xl"
+          >
             Search
           </button>
 

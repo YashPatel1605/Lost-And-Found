@@ -58,6 +58,7 @@ const LoginModal = ({ isOpen, onClose, onLoginSuccess }) => {
         if (token) {
           localStorage.setItem("token", token);
           localStorage.setItem("user", JSON.stringify(data));
+           localStorage.setItem("userId", data.id || data._id); 
           window.dispatchEvent(new Event("authChange"));
           toast.success("Welcome back! ✅");
           resetForm();

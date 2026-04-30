@@ -16,23 +16,37 @@ export const registerUser = (data) => {
 // };
 
 // LOGIN
+// export const loginUser = async (data) => {
+//   const res = await apiClient.post("/auth/login", data);
+//   const responseData = res.data?.data || res.data;
+//   const userData = responseData.user || responseData;
+//   const token = responseData.token;
+
+//   if (token) {
+//     localStorage.setItem("token", token);
+//   }
+//   if (userData) {
+//     localStorage.setItem("user", JSON.stringify(userData));
+//     if (userData.id || userData._id) {
+//       localStorage.setItem("userId", userData.id || userData._id);
+//     }
+//     if (userData.role) {
+//       localStorage.setItem("role", userData.role);
+//     }
+//   }
+//   return res;
+// };
+
 export const loginUser = async (data) => {
   const res = await apiClient.post("/auth/login", data);
   const responseData = res.data?.data || res.data;
   const userData = responseData.user || responseData;
   const token = responseData.token;
 
-  if (token) {
-    localStorage.setItem("token", token);
-  }
+  if (token) localStorage.setItem("token", token);
   if (userData) {
-    localStorage.setItem("user", JSON.stringify(userData));
-    if (userData.id || userData._id) {
-      localStorage.setItem("userId", userData.id || userData._id);
-    }
-    if (userData.role) {
-      localStorage.setItem("role", userData.role);
-    }
+    localStorage.setItem("user", JSON.stringify(userData));   
+    localStorage.setItem("userId", userData._id || userData.id); 
   }
   return res;
 };
@@ -51,9 +65,15 @@ export const resetPassword = (token, password) => {
 };
 
 // GET ALL ITEMS
-export const getAllItems = () => {
-  return apiClient.get("/items");
+// export const getAllItems = () => {
+//   return apiClient.get("/items");
+// };
+
+export const getAllItems = (params = {}) => {
+  return apiClient.get("/items", { params });
 };
+
+
 
 // GET ITEM BY ID
 export const getItemById = (id) => {
@@ -93,6 +113,16 @@ export const submitClaim = (itemId) => {
 };
 
 // Marks as Claim
-export const markItemAsClaimed = async (id, statusData) => { 
-  return await apiClient.put(`/items/${id}`, { find: true });
+// export const markItemAsClaimed = async (id, statusData) => { 
+//   return await apiClient.put(`/items/${id}`, { find: true });
+// };
+
+export const markItemAsClaimed = async (id, isClaiming = true) => { 
+  return await apiClient.put(`/items/${id}`, { find: isClaiming , type: "claim"});
 };
+
+// GET MY ITEMS 
+// export const getMyItems = () => {
+//   const userId = localStorage.getItem("userId");
+//   return apiClient.get(`/items?userId=${userId}`);
+// };

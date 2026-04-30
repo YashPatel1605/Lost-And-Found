@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getAllItems } from "../authApi/authApi";
-import apiClient from "../../utils/apiClient";
 
 export default function LostSomething() {
   const navigate = useNavigate();
@@ -12,19 +11,15 @@ export default function LostSomething() {
     students: 0,
   });
 
-  //  Fetch stats on load
+  // FETCH STATS ON LOAD
   useEffect(() => {
     fetchStats();
   }, []);
 
   const fetchStats = async () => {
     try {
-      const [itemsRes, usersRes] = await Promise.all([
-        getAllItems(),
-        apiClient.get("/users/count"),
-      ]);
+      const itemsRes = await getAllItems();
 
-      //  ITEMS 
       const items =
         itemsRes.data?.data?.items ||
         itemsRes.data?.items ||
@@ -32,8 +27,10 @@ export default function LostSomething() {
         itemsRes.data ||
         [];
 
+      // ✅ TOTAL ITEMS
       const totalItems = items.length;
 
+      // ✅ RECOVERED ITEMS
       const recoveredItems = items.filter(
         (item) =>
           item.find === true ||
@@ -41,11 +38,18 @@ export default function LostSomething() {
           item.itemStatus === "CLAIMED"
       ).length;
 
-      // -------- USERS --------
-      const students =
-        usersRes.data?.count ||
-        usersRes.data?.data?.count ||
-        0;
+      // ✅ UNIQUE USERS (STUDENTS)
+      const uniqueUsers = new Set(
+        items.map(
+          (item) =>
+            item.userId ||
+            item.createdBy ||
+            item.user?._id ||   // fallback
+            item.user?.id
+        )
+      );
+
+      const students = uniqueUsers.size;
 
       setStats({
         totalItems,
@@ -54,25 +58,6 @@ export default function LostSomething() {
       });
     } catch (error) {
       console.error("Stats error:", error);
-
-      // fallback (if user API fails)
-      try {
-        const res = await getAllItems();
-        const items =
-          res.data?.data?.items ||
-          res.data?.items ||
-          res.data?.data ||
-          res.data ||
-          [];
-
-        setStats({
-          totalItems: items.length,
-          recoveredItems: items.filter((i) => i.find === true).length,
-          students: 0,
-        });
-      } catch (err) {
-        console.error("Fallback failed:", err);
-      }
     }
   };
 
@@ -115,7 +100,7 @@ export default function LostSomething() {
           </button>
         </div>
 
-        {/* ✅ Stats (Design SAME, Data Dynamic) */}
+        {/* STATS */}
         <div className="flex justify-center mt-10">
           <div className="w-full max-w-3xl bg-[#0f2747]/80 backdrop-blur-sm rounded-xl px-4 py-4">
             <div className="grid grid-cols-3 text-center items-center">

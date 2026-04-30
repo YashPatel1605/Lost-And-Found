@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { getAllItems } from "../authApi/authApi";
 import { toast } from "react-toastify";
 import LoginModal from "../../Modal/LoginModal";
@@ -9,25 +9,37 @@ import { useNavigate } from "react-router-dom";
 export default function LatestItems() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showAll, setShowAll] = useState(false);
   const navigate = useNavigate();
+  
+  // ✅ 1. Ref guard to prevent double API calls (React Strict Mode)
+  const isFetched = useRef(false);
 
-  // Modal and Selection states
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState(null); // Full item object
+  const [selectedItem, setSelectedItem] = useState(null);
   const [pendingItem, setPendingItem] = useState(null);
 
   useEffect(() => {
-    fetchItems();
+    // ✅ 2. Check ref before calling
+    if (!isFetched.current) {
+      fetchItems();
+      isFetched.current = true;
+    }
   }, []);
 
   const fetchItems = async () => {
     try {
-      setLoading(true);
+      setLoading(true);    
+      console.log("Fetching Latest Items API...");
       const res = await getAllItems();
-      const fetchedData = res.data?.data?.items || res.data?.items || res.data?.data || [];
+      
+      // Log simple response status
+      console.log("API Status:", res.status);
+      console.log("Api", res)
+
+      const fetchedData = res.data?.data?.items || res.data?.items || res.data?.data || res.data || [];
       setItems(Array.isArray(fetchedData) ? fetchedData : []);
     } catch (error) {
+      console.error("Fetch failed:", error);
       toast.error("Could not load latest items ❌");
     } finally {
       setLoading(false);
@@ -43,6 +55,16 @@ export default function LatestItems() {
       toast.info("Please login to view full details 🔑");
       setIsLoginModalOpen(true);
     }
+  };
+
+  const isItemClaimed = (item) => {
+    const status = (item.itemStatus || item.status || "").toUpperCase();
+    return status === "CLAIMED" || item.find === true;
+  };
+
+  const handleClaimClick = (event, item) => {
+    event.stopPropagation();
+    handleCardClick(item);
   };
 
   const handleLoginSuccess = () => {
@@ -62,12 +84,11 @@ export default function LatestItems() {
     return { label: status, className: colorClass };
   };
 
-  const visibleItems = showAll ? items : items.slice(0, 6);
+  const visibleItems = items.slice(0, 6);
 
   return (
     <section className="bg-gray-100 py-10 px-4 md:px-8 min-h-screen relative">
       <div className={`max-w-7xl mx-auto flex flex-col transition-all duration-300 ${selectedItem ? "blur-sm" : ""}`}>
-        {/* Header Section */}
         <div className="text-center mb-10">
           <span className="text-blue-600 bg-blue-100 px-4 py-1 rounded-full text-sm font-medium uppercase tracking-wide">
             Recent Listings
@@ -75,7 +96,6 @@ export default function LatestItems() {
           <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mt-3">Latest Items</h2>
         </div>
 
-        {/* Content Section */}
         <div className="grow">
           {loading ? (
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
@@ -85,6 +105,7 @@ export default function LatestItems() {
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {visibleItems.map((item) => {
                 const status = getStatusInfo(item);
+                const claimed = isItemClaimed(item);
                 return (
                   <div
                     key={item._id}
@@ -121,9 +142,30 @@ export default function LatestItems() {
                             {item.name || item.postedBy?.name || "User"}
                           </span>
                         </div>
-                        <button className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                          View →
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleCardClick(item);
+                            }}
+                            className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                          >
+                            View →
+                          </button>
+                          {/* <button
+                            type="button"
+                            onClick={(event) => handleClaimClick(event, item)}
+                            disabled={claimed}
+                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
+                              claimed
+                                ? "bg-green-50 text-green-600 cursor-not-allowed"
+                                : "bg-gray-800 text-white hover:bg-gray-900"
+                            }`}
+                          >
+                            {claimed ? "Claimed" : "Claim"}
+                          </button> */}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -133,22 +175,18 @@ export default function LatestItems() {
           )}
         </div>
 
-        {/* View All Button */}
         {!loading && items.length > 0 && (
           <div className="flex justify-center mt-16 mb-10">
             <button
-              // onClick={() => setShowAll((prev) => !prev)}
-              onClick={() => navigate("/items")}
+              onClick={() => navigate("/listings")}
               className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300 active:scale-95"
             >
-              {showAll ? "Show Less" : "View All Items"}
-              <span className="text-xl">→</span>
+              View All Items <span className="text-xl">→</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* --- MODAL LAYER --- */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-md" onClick={() => setSelectedItem(null)}></div>

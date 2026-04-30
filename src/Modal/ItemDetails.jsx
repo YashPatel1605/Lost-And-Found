@@ -7,21 +7,54 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
   const [isChecked, setIsChecked] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  
-  const isOwner = 
-    user?.email === item?.email ||            
-    user?.id === item?.reportedBy?._id ||     
-    user?.id === item?.claimedBy?._id ||       
-    user?.email === item?.claimedBy?.email;
+  const currentUserId = String(
+    user?._id || user?.id || localStorage.getItem("userId") || "",
+  );
+  const currentUserEmail = String(user?.email || "").toLowerCase();
+
+  const matchesCurrentUser = (candidateId, candidateEmail) => {
+    const normalizedId = String(candidateId || "");
+    const normalizedEmail = String(candidateEmail || "").toLowerCase();
+
+    return (
+      (currentUserId && normalizedId && currentUserId === normalizedId) ||
+      (currentUserEmail &&
+        normalizedEmail &&
+        currentUserEmail === normalizedEmail)
+    );
+  };
+
+  const isReportUser =
+    matchesCurrentUser(item?.reportedBy?._id, item?.reportedBy?.email) ||
+    matchesCurrentUser(item?.reportedBy?.id, item?.reportedBy?.email) ||
+    matchesCurrentUser(item?.postedBy?._id, item?.postedBy?.email) ||
+    matchesCurrentUser(item?.postedBy?.id, item?.postedBy?.email) ||
+    matchesCurrentUser(item?.userId, item?.email) ||
+    matchesCurrentUser(item?.createdBy, item?.email) ||
+    matchesCurrentUser(null, item?.email);
+
+  const isClaimRequester =
+    matchesCurrentUser(item?.claimedBy?._id, item?.claimedBy?.email) ||
+    matchesCurrentUser(item?.claimedBy?.id, item?.claimedBy?.email);
+
+  // const canChangeStatus = isReportUser || isClaimRequester;
+  const canChangeStatus = isReportUser;
 
   const [isClaimed, setIsClaimed] = useState(
-    item?.status === "CLAIMED" || item?.itemStatus === "CLAIMED",
+    item?.find === true ||
+      // item?.find ==
+      item?.status === "CLAIMED" ||
+      item?.itemStatus === "CLAIMED",
   );
   const [isUpdating, setIsUpdating] = useState(false);
- 
+
   useEffect(() => {
-    setIsClaimed(item?.status === "CLAIMED" || item?.itemStatus === "CLAIMED");
-  }, [item?.status, item?.itemStatus]);
+    setIsClaimed(
+      item?.find === true ||
+        item?.status === "CLAIMED" ||
+        item?.itemStatus === "CLAIMED",
+    );
+  }, [item?.find, item?.status, item?.itemStatus]);
 
   if (!item) return null;
 
@@ -29,8 +62,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
   const handleSubmitClaim = async () => {
     try {
       setIsSubmitting(true);
-      await submitClaim(item._id);     
-     
+      await submitClaim(item._id);
+
       setIsClaimed(true);
       toast.success("Claim request submitted successfully! 🎉");
 
@@ -52,12 +85,14 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
   const handleToggleClaimed = async () => {
     try {
       setIsUpdating(true);
-      await markItemAsClaimed(item._id);
-      
+      const nextClaimState = !isClaimed;
+      console.log("nextClaimState", nextClaimState);
+      await markItemAsClaimed(item._id, nextClaimState);
+
       // ✅ INSTANTLY update UI
-      setIsClaimed(!isClaimed);
+      setIsClaimed(nextClaimState);
       toast.success(
-        !isClaimed ? "Item marked as claimed ✅" : "Claim removed ❌",
+        nextClaimState ? "Item marked as claim ✅" : "Claim removed ❌",
       );
 
       // ✅ Background refresh (no 'await')
@@ -76,12 +111,13 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   // STATUS HELPERS
   const getDisplayStatus = (item) => {
-    return (
-      item.itemStatus ||
-      item.type ||
-      item.status ||
-      "POSTED"
+    const rawStatus = (
+      item?.find === true
+        ? "CLAIM"
+        : item?.itemStatus || item?.status || item?.type || "POSTED"
     ).toUpperCase();
+
+    return rawStatus === "CLAIMED" ? "CLAIM" : rawStatus;
   };
 
   const getStatusColor = (status) => {
@@ -92,7 +128,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     return "bg-gray-100 text-gray-600";
   };
 
-  const currentStatus = isClaimed ? "CLAIMED" : getDisplayStatus(item);
+  const currentStatus = isClaimed ? "CLAIM" : getDisplayStatus(item);
 
   return (
     <div className="w-full max-w-100 rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease]">
@@ -217,8 +253,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
-            {/* CLAIMED USER + TOGGLE - Only for Owner */}
-            {item?.reportedBy && isOwner && (
+            {/* CLAIMED USER + TOGGLE - Report User or Claim Request User */}
+            {canChangeStatus && (
               <div className="flex flex-col gap-2 border-t border-blue-100 pt-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2.5">
@@ -229,49 +265,51 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-800 text-xs">
-                        {item.reportedBy?.name}
+                        {item.reportedBy?.name ||
+                          item.postedBy?.name ||
+                          item.name ||
+                          "User"}
                       </p>
                       <p className="text-[11px] text-gray-500">
-                        {item.reportedBy?.email}
+                        {item.reportedBy?.email ||
+                          item.postedBy?.email ||
+                          item.email ||
+                          "No email"}
                       </p>
                     </div>
                   </div>
                   <div className="text-xs font-bold text-green-600">
-                    📞 {item.reportedBy?.contactNumber || "No Number"}
+                    📞{" "}
+                    {item.reportedBy?.contactNumber ||
+                      item.contactNumber ||
+                      "No Number"}
                   </div>
                 </div>
 
-                {item.find ? (
-                  <div className="mt-2 p-2 bg-green-50 border border-green-100 rounded-lg flex items-center justify-center">
-                    <span className="text-xs font-bold text-green-700">
-                      CLAIMED
-                    </span>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between bg-white/50 px-3 py-2 rounded-lg border border-blue-100 mt-2">
-                    <span className="text-xs font-semibold text-gray-700">
-                      Mark as Claimed
-                    </span>
-                    <button
-                      onClick={handleToggleClaimed}
-                      disabled={isUpdating}
-                      className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${
-                        isClaimed ? "bg-green-500" : "bg-gray-300"
-                      } ${isUpdating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                    >
-                      <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
-                          isClaimed ? "translate-x-5" : "translate-x-1"
-                        }`}
-                      />
-                    </button>
-                  </div>
-                )}
+                <div className="flex items-center justify-between bg-white/50 px-3 py-2 rounded-lg border border-blue-100 mt-2">
+                  <span className="text-xs font-semibold text-gray-700">
+                    {isClaimed ? "Remove Claim Status" : "Mark as Claim"}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleToggleClaimed}
+                    disabled={isUpdating}
+                    className={`relative inline-flex h-5 w-10 items-center rounded-full transition ${
+                      isClaimed ? "bg-green-500" : "bg-gray-300"
+                    } ${isUpdating ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                        isClaimed ? "translate-x-5" : "translate-x-1"
+                      }`}
+                    />
+                  </button>
+                </div>
               </div>
             )}
 
-            {/* SUBMIT CLAIM - Hide if already claimed */}
-            {!isOwner && !isClaimed && (
+            {/* SUBMIT CLAIM */}
+            {!canChangeStatus && !isClaimed && (
               <div className="flex flex-col gap-3">
                 <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
                   <input
@@ -297,11 +335,20 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
             )}
 
             {/* ALREADY CLAIMED MESSAGE */}
-            {!isOwner && isClaimed && (
+            {!canChangeStatus && isClaimed && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs font-bold text-green-700 text-center">
                   ✅ You have successfully claimed this item
                 </p>
+              </div>
+            )}
+            
+            {isClaimed && (
+              <div className="bg-green-50 border border-green-200 py-2 px-4 rounded-xl flex items-center justify-center gap-2 animate-in fade-in slide-in-from-top-2 duration-500">
+                <span className="text-green-600 text-sm">✅</span>
+                <span className="text-[12px] font-bold text-green-700 uppercase tracking-tight">
+                  Marked as Claimed Successfully
+                </span>
               </div>
             )}
           </div>

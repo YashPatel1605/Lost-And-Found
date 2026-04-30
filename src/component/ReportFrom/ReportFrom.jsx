@@ -9,7 +9,7 @@ export default function ReportForm({ selectedType }) {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    type: selectedType || "found", // Still held in state to send to API, but hidden from UI
+    type: selectedType || "found", 
     itemTitle: "",
     dateFound: "",
     description: "",
@@ -81,11 +81,10 @@ export default function ReportForm({ selectedType }) {
         ...formData,
         category: "General",
         image: uploadedImageUrl,
+         userId: localStorage.getItem("userId"),
       };
 
       console.log("Submitting Data to API:", finalReport);
-
-      // 4. API Call
       const res = await reportItem(finalReport);
 
       console.log("API Response:", res.data);

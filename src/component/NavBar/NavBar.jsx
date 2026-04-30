@@ -61,7 +61,7 @@ const handleLogout = () => {
               Home
             </NavLink>
             <NavLink
-              to="/items"
+              to="/listings"
               className={({ isActive }) => (isActive ? activeClass : linkClass)}
             >
               Browse
