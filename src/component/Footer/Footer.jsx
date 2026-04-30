@@ -1,6 +1,11 @@
 import React from "react";
+import { Link } from "react-router-dom"; 
 
 export default function Footer() {
+  const currentYear = new Date().getFullYear();
+  const userRole = localStorage.getItem("role");
+  const dashboardPath = userRole === "admin" ? "/admin-dashboard" : "/dashboard";
+
   return (
     <footer className="bg-[#061b33] text-gray-300 px-4 sm:px-6 md:px-12 py-10">
       <div className="max-w-7xl mx-auto">
@@ -19,45 +24,36 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links + Categories (Same Row) */}
+          {/* Quick Links */}
           <div className="grid grid-cols-2 gap-8">
-            
-            {/* Quick Links */}
             <div>
               <h3 className="text-white font-semibold mb-4">Quick Links</h3>
               <ul className="space-y-2 text-sm">
-                <li className="hover:text-white cursor-pointer">Home</li>
-                <li className="hover:text-white cursor-pointer">Browse Items</li>
-                <li className="hover:text-white cursor-pointer">Report Item</li>
-                <li className="hover:text-white cursor-pointer">Dashboard</li>
+                <li>
+                  <Link to="/" className="hover:text-white transition-colors">Home</Link>
+                </li>
+                <li>
+                  <Link to="/items" className="hover:text-white transition-colors">Browse Items</Link>
+                </li>
+                <li>
+                  <Link to="/report" className="hover:text-white transition-colors">Report Item</Link>
+                </li>
+                <li>
+                  <Link to="/mypost" className="hover:text-white transition-colors">Dashboard</Link>
+                </li>
               </ul>
             </div>
-
-            {/* Categories */}
+            
+            {/* Support Links */}
             <div>
-              <h3 className="text-white font-semibold mb-4">Categories</h3>
+              <h3 className="text-white font-semibold mb-4">Support</h3>
               <ul className="space-y-2 text-sm">
-                <li className="hover:text-white cursor-pointer">Electronics</li>
-                <li className="hover:text-white cursor-pointer">ID Cards</li>
-                <li className="hover:text-white cursor-pointer">Bags & Wallets</li>
-                <li className="hover:text-white cursor-pointer">Books</li>
-                <li className="hover:text-white cursor-pointer">Keys</li>
+                <li><Link to="/contact" className="hover:text-white">Contact Admin</Link></li>
+                <li><Link to="/faq" className="hover:text-white">FAQ</Link></li>
+                <li><Link to="/privacy" className="hover:text-white">Privacy Policy</Link></li>
               </ul>
             </div>
-
-          </div>
-
-          {/* Support */}
-          <div>
-            <h3 className="text-white font-semibold mb-4">Support</h3>
-            <ul className="space-y-2 text-sm">
-              <li className="hover:text-white cursor-pointer">Contact Admin</li>
-              <li className="hover:text-white cursor-pointer">FAQ</li>
-              <li className="hover:text-white cursor-pointer">Privacy Policy</li>
-              <li className="hover:text-white cursor-pointer">Terms of Use</li>
-            </ul>
-          </div>
-
+          </div>          
         </div>
 
         {/* Divider */}
@@ -65,15 +61,11 @@ export default function Footer() {
 
         {/* Bottom Section */}
         <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-400 gap-3 text-center sm:text-left">
-
-          <p>© 2025 CampusFind. All rights reserved.</p>
-
+          <p>© {currentYear} CampusFind. All rights reserved.</p>
           <p>
             Made with <span className="text-red-500">❤️</span> for campus students
           </p>
-
         </div>
-
       </div>
     </footer>
   );

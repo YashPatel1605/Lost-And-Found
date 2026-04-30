@@ -13,28 +13,35 @@ import MyPosts from "./component/Dashboard/MyPost";
 import EditItem from "./component/EditItem/EditItem";
 // import ResetPassword from "./component/ResetPassword/ResetPassword";
 import ResetPassword from "./component/ResetPassword/ResetPassword";
-
+import ProtectedRoute from "./component/ProtectedRoute/ProtectedRoute";
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
-       <ToastContainer position="top-right" autoClose={2000} />
+      <ToastContainer position="top-right" autoClose={2000} />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/browse" element={<Browse />} />
+        <Route path="/items" element={<Browse />} />
         <Route
           path="/report"
-          element={           
-            // <ProtectedRoute>
-              <Report/>
-            // </ProtectedRoute>
+          element={
+            <ProtectedRoute>
+              <Report />
+            </ProtectedRoute>
           }
         />
-        <Route path="/mypost" element={<MyPosts/>}/>
-       {/* <Route path="/item/:id" element={<ItemDetails/>} /> */}
-        <Route path="/edit-item/:id" element={<EditItem />} />  
-        <Route path="/reset-password" element={<ResetPassword/>} />
+        <Route
+          path="/mypost"
+          element={
+            <ProtectedRoute>
+              <MyPosts />
+            </ProtectedRoute>
+          }
+        />
+        {/* <Route path="/item/:id" element={<ItemDetails/>} /> */}
+        <Route path="/edit-item/:id" element={<EditItem />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* <Route path="/login" element={<Login />} /> */}
         {/* <Route path="/signup" element={<Signup />} /> */}
       </Routes>

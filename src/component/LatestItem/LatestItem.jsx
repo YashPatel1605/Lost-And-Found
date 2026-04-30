@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { getAllItems } from "../authApi/authApi";
 import { toast } from "react-toastify";
 import LoginModal from "../../Modal/LoginModal";
-import ItemDetails from "../../Modal/ItemDetails"; // Import the modal
+import ItemDetails from "../../Modal/ItemDetails"; 
 import SkeletonCard from "../SkeletonCard/SkeletonCard";
+import { useNavigate } from "react-router-dom";
 
 export default function LatestItems() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const navigate = useNavigate();
 
   // Modal and Selection states
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -35,7 +37,7 @@ export default function LatestItems() {
   const handleCardClick = (item) => {
     const token = localStorage.getItem("token");
     if (token) {
-      setSelectedItem(item); // Open Modal directly
+      setSelectedItem(item); 
     } else {
       setPendingItem(item);
       toast.info("Please login to view full details 🔑");
@@ -60,7 +62,7 @@ export default function LatestItems() {
     return { label: status, className: colorClass };
   };
 
-  const visibleItems = showAll ? items : items.slice(0, 3);
+  const visibleItems = showAll ? items : items.slice(0, 6);
 
   return (
     <section className="bg-gray-100 py-10 px-4 md:px-8 min-h-screen relative">
@@ -86,7 +88,7 @@ export default function LatestItems() {
                 return (
                   <div
                     key={item._id}
-                    onClick={() => handleCardClick(item)} // Pass the whole item
+                    onClick={() => handleCardClick(item)} 
                     className="group cursor-pointer bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="bg-blue-50 h-48 flex items-center justify-center relative">
@@ -135,7 +137,8 @@ export default function LatestItems() {
         {!loading && items.length > 0 && (
           <div className="flex justify-center mt-16 mb-10">
             <button
-              onClick={() => setShowAll((prev) => !prev)}
+              // onClick={() => setShowAll((prev) => !prev)}
+              onClick={() => navigate("/items")}
               className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300 active:scale-95"
             >
               {showAll ? "Show Less" : "View All Items"}

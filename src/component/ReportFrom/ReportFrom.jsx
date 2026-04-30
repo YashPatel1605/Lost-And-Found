@@ -9,9 +9,8 @@ export default function ReportForm({ selectedType }) {
   const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    type: selectedType || "found",
+    type: selectedType || "found", // Still held in state to send to API, but hidden from UI
     itemTitle: "",
-    category: "",
     dateFound: "",
     description: "",
     location: "",
@@ -48,9 +47,9 @@ export default function ReportForm({ selectedType }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // 1. Basic Validation
     if (
       !formData.itemTitle ||
-      !formData.category ||
       !formData.dateFound ||
       !formData.description ||
       !formData.location ||
@@ -67,41 +66,37 @@ export default function ReportForm({ selectedType }) {
     try {
       let uploadedImageUrl = "";
 
+      // 2. Handle Image Upload if file exists
       if (file) {
         const uploadRes = await uploadImage(file);
         uploadedImageUrl =
-          uploadRes?.data?.url || uploadRes?.data?.imageUrl || uploadRes?.data?.image || "";
-        console.log("Uploaded Image URL:", uploadedImageUrl);
+          uploadRes?.data?.url ||
+          uploadRes?.data?.imageUrl ||
+          uploadRes?.data?.image ||
+          "";
       }
 
+      // 3. Construct Final Payload
       const finalReport = {
-        type: formData.type,
-        itemTitle: formData.itemTitle,
-        category: formData.category,
-        dateFound: formData.dateFound,
-        description: formData.description,
-        location: formData.location,
-        name: formData.name,
-        contactNumber: formData.contactNumber,
-        email: formData.email,
+        ...formData,
+        category: "General",
         image: uploadedImageUrl,
       };
 
-      console.log("Sending payload:", finalReport);
+      console.log("Submitting Data to API:", finalReport);
 
+      // 4. API Call
       const res = await reportItem(finalReport);
-      console.log("Report success:", res.data);
 
+      console.log("API Response:", res.data);
+      console.log("res", res);
       toast.success("Report submitted successfully! 🎉");
 
       setTimeout(() => {
         window.location.href = "/";
       }, 2000);
     } catch (err) {
-      console.error("Submit Error:", err);
-      console.log("Status:", err.response?.status);
-      console.log("Error Data:", err.response?.data);
-      console.log("Message:", err.response?.data?.message);
+      console.error("❌ Submit Error:", err.response?.data || err.message);
 
       toast.error(err.response?.data?.message || "Failed to submit report ❌");
     } finally {
@@ -115,19 +110,25 @@ export default function ReportForm({ selectedType }) {
         onSubmit={handleSubmit}
         className="max-w-2xl mx-auto bg-white rounded-2xl shadow-sm p-6 md:p-10"
       >
-        <div
-          onClick={() => fileInputRef.current.click()}
-          className="border-2 border-dashed border-gray-300 rounded-2xl p-6 md:p-10 text-center mb-8 hover:border-blue-400 cursor-pointer"
-        >
-          {preview ? (
-            <img
-              src={preview}
-              alt="preview"
-              className="mx-auto max-h-48 rounded-lg object-cover"
-            />
-          ) : (
-            <div className="text-gray-500">📷 Click to upload image</div>
-          )}
+        {/* Image Upload - Styled per your design */}
+        <div className="mb-6">
+          <label className="block text-gray-700 font-semibold mb-2">
+            Upload Image
+          </label>
+          <div
+            onClick={() => fileInputRef.current.click()}
+            className="border-2 border-dashed border-gray-300 rounded-2xl p-6 md:p-10 text-center hover:border-blue-400 cursor-pointer transition"
+          >
+            {preview ? (
+              <img
+                src={preview}
+                alt="preview"
+                className="mx-auto max-h-48 rounded-lg object-cover"
+              />
+            ) : (
+              <div className="text-gray-500">📷 Click to upload image</div>
+            )}
+          </div>
         </div>
 
         <input
@@ -139,96 +140,121 @@ export default function ReportForm({ selectedType }) {
         />
 
         <div className="space-y-5">
-          <select
-            name="type"
-            value={formData.type}
-            onChange={handleInputChange}
-            className="w-full border rounded-lg px-4 py-3 outline-none"
-          >
-            <option value="lost">Lost Item</option>
-            <option value="found">Found Item</option>
-          </select>
-
-          <input
-            name="itemTitle"
-            value={formData.itemTitle}
-            onChange={handleInputChange}
-            placeholder="Item Title *"
-            className="w-full border rounded-lg px-4 py-3 outline-none"
-            required
-          />
-
-          <div className="grid grid-cols-2 gap-4">
-            <select
-              name="category"
-              value={formData.category}
+          {/* Item Title */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Item Title *
+            </label>
+            <input
+              name="itemTitle"
+              value={formData.itemTitle}
               onChange={handleInputChange}
-              className="border rounded-lg px-4 py-3 outline-none"
+              placeholder="Item Title"
+              className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
               required
-            >
-              <option value="">Category</option>
-              <option value="Electronics">Electronics</option>
-              <option value="Wallet">Wallet</option>
-              <option value="ID Cards">ID Cards</option>
-            </select>
+            />
+          </div>
 
+         {/* Date */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Date*
+            </label>
             <input
               type="date"
               name="dateFound"
               value={formData.dateFound}
               onChange={handleInputChange}
-              className="border rounded-lg px-4 py-3 outline-none"
+              className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
               required
             />
           </div>
 
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleInputChange}
-            placeholder="Description *"
-            rows="3"
-            className="w-full border rounded-lg px-4 py-3 outline-none"
-            required
-          />
+          {/* Description */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Description *
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleInputChange}
+              placeholder="Description"
+              rows="3"
+              className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
+              required
+            />
+          </div>
 
-          <input
-            name="location"
-            value={formData.location}
-            onChange={handleInputChange}
-            placeholder="Location *"
-            className="w-full border rounded-lg px-4 py-3 outline-none"
-            required
-          />
+          {/* Location */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Location *
+            </label>
+            <input
+              name="location"
+              value={formData.location}
+              onChange={handleInputChange}
+              placeholder="Location"
+              className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
+              required
+            />
+          </div>
 
+          {/* Name and Contact Number Grid */}
           <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-gray-700 font-semibold mb-1">
+                Name *
+              </label>
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Name"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
+                required
+              />
+            </div>
+            
+            <div>
+              <label className="block text-gray-700 font-semibold mb-1">
+                Contact Number *
+              </label>
+              <input
+                name="contactNumber"
+                type="tel"
+                value={formData.contactNumber}
+                onChange={handleInputChange}
+                placeholder="10-digit phone number"
+                className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
+                required
+                minLength="10"
+                maxLength="15"
+              />
+              {formData.contactNumber && formData.contactNumber.length < 10 && (
+                <p className="text-red-500 text-xs mt-1">
+                  Number must be at least 10 digits.
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block text-gray-700 font-semibold mb-1">
+              Email *
+            </label>
             <input
-              name="name"
-              value={formData.name}
+              name="email"
+              value={formData.email}
               onChange={handleInputChange}
-              placeholder="Name *"
-              className="border rounded-lg px-4 py-3 outline-none"
-              required
-            />
-            <input
-              name="contactNumber"
-              value={formData.contactNumber}
-              onChange={handleInputChange}
-              placeholder="Contact Number *"
-              className="border rounded-lg px-4 py-3 outline-none"
+              placeholder="Email"
+              type="email"
+              className="w-full border rounded-lg px-4 py-3 outline-none focus:border-blue-400"
               required
             />
           </div>
-
-          <input
-            name="email"
-            value={formData.email}
-            onChange={handleInputChange}
-            placeholder="Email *"
-            type="email"
-            className="w-full border rounded-lg px-4 py-3 outline-none"
-            required
-          />
         </div>
 
         <button

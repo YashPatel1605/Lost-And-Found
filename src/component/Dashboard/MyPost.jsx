@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getAllItems, deleteItem } from "../authApi/authApi";
 import { toast } from "react-toastify";
+import Footer from "../Footer/Footer";
 
 export default function MyPosts() {
   const [items, setItems] = useState([]);
@@ -208,7 +209,11 @@ export default function MyPosts() {
         ) : (
           <p className="text-center text-gray-500">No items found</p>
         )}
-      </div>
+      </div>      
+        <Footer/>
     </div>
+    
   );
 }
+
+// /api/items?type=found

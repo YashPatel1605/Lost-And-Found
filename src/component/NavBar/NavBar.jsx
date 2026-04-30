@@ -16,22 +16,28 @@ const Navbar = () => {
       ? "text-blue-400 font-semibold"
       : "text-white hover:text-blue-400 transition";
 
-  
   useEffect(() => {
+  const checkAuth = () => {
     const token = localStorage.getItem("token");
-
-   
-    if (token) setIsLoggedIn(true);
-  }, []);
-
-  
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setIsLoggedIn(false);
-    setIsOpen(false);
+    setIsLoggedIn(!!token);
   };
 
+  checkAuth();
+
+  // Listen for a custom "authChange" event
+  window.addEventListener("authChange", checkAuth);
+  
+  return () => window.removeEventListener("authChange", checkAuth);
+}, []);
+
+const handleLogout = () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("user");
+  // Dispatch event so other components (if any) update
+  window.dispatchEvent(new Event("authChange")); 
+  setIsLoggedIn(false);
+  setIsOpen(false);
+};
   const handleLinkClick = () => {
     setIsOpen(false);
   };
@@ -55,7 +61,7 @@ const Navbar = () => {
               Home
             </NavLink>
             <NavLink
-              to="/browse"
+              to="/items"
               className={({ isActive }) => (isActive ? activeClass : linkClass)}
             >
               Browse
@@ -66,11 +72,11 @@ const Navbar = () => {
             >
               Report
             </NavLink>
-             <NavLink
+            <NavLink
               to="/mypost"
               className={({ isActive }) => (isActive ? activeClass : linkClass)}
             >
-              Dashbord
+              Dashboard
             </NavLink>
           </div>
 
@@ -128,12 +134,12 @@ const Navbar = () => {
         {/* Close */}
         <button
           onClick={() => setIsOpen(false)}
-           className="absolute top-4 right-4 text-xl text-white mb-40"
+          className="absolute top-4 right-4 text-xl text-white mb-40"
         >
           ✕
         </button>
 
-        {/* Links */}
+        {/* Links (Dashboard Added Here) */}
         <div className="flex flex-col gap-4 text-lg">
           <NavLink to="/" onClick={handleLinkClick} className={mobileLinkClass}>
             Home
@@ -151,6 +157,14 @@ const Navbar = () => {
             className={mobileLinkClass}
           >
             Report
+          </NavLink>
+          {/* ✅ Dashboard added for Mobile View */}
+          <NavLink
+            to="/mypost"
+            onClick={handleLinkClick}
+            className={mobileLinkClass}
+          >
+            Dashboard
           </NavLink>
         </div>
 
