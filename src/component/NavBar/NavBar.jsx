@@ -145,7 +145,7 @@ const handleLogout = () => {
             Home
           </NavLink>
           <NavLink
-            to="/browse"
+            to="/listings"
             onClick={handleLinkClick}
             className={mobileLinkClass}
           >
