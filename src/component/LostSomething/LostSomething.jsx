@@ -86,7 +86,7 @@ export default function LostSomething() {
         {/* Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-8">
           <button
-            onClick={() => navigate("/browse")}
+            onClick={() => navigate("/listings")}
             className="bg-blue-500 hover:bg-blue-600 transition px-6 py-3 rounded-xl font-semibold flex items-center gap-2 shadow-lg"
           >
             🔍 Browse Items
