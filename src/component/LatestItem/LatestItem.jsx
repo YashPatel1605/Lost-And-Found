@@ -1,55 +1,25 @@
-import React, { useState, useEffect, useRef } from "react";
-import { getAllItems } from "../authApi/authApi";
+import React, { useState } from "react";
 import { toast } from "react-toastify";
 import LoginModal from "../../Modal/LoginModal";
-import ItemDetails from "../../Modal/ItemDetails"; 
+import ItemDetails from "../../Modal/ItemDetails";
 import SkeletonCard from "../SkeletonCard/SkeletonCard";
 import { useNavigate } from "react-router-dom";
 
-export default function LatestItems() {
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+export default function LatestItems({
+  items = [],
+  loading = false,
+  onItemUpdate,
+}) {
   const navigate = useNavigate();
-  
-  // ✅ 1. Ref guard to prevent double API calls (React Strict Mode)
-  const isFetched = useRef(false);
 
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [pendingItem, setPendingItem] = useState(null);
 
-  useEffect(() => {
-    // ✅ 2. Check ref before calling
-    if (!isFetched.current) {
-      fetchItems();
-      isFetched.current = true;
-    }
-  }, []);
-
-  const fetchItems = async () => {
-    try {
-      setLoading(true);    
-      console.log("Fetching Latest Items API...");
-      const res = await getAllItems();
-      
-      // Log simple response status
-      console.log("API Status:", res.status);
-      console.log("Api", res)
-
-      const fetchedData = res.data?.data?.items || res.data?.items || res.data?.data || res.data || [];
-      setItems(Array.isArray(fetchedData) ? fetchedData : []);
-    } catch (error) {
-      console.error("Fetch failed:", error);
-      toast.error("Could not load latest items ❌");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCardClick = (item) => {
     const token = localStorage.getItem("token");
     if (token) {
-      setSelectedItem(item); 
+      setSelectedItem(item);
     } else {
       setPendingItem(item);
       toast.info("Please login to view full details 🔑");
@@ -62,9 +32,17 @@ export default function LatestItems() {
     return status === "CLAIMED" || item.find === true;
   };
 
-  const handleClaimClick = (event, item) => {
-    event.stopPropagation();
-    handleCardClick(item);
+  const getStatusInfo = (item) => {
+    const status = (
+      item.itemStatus || item.type || item.status || "POSTED"
+    ).toUpperCase();
+
+    let colorClass = "bg-gray-100 text-gray-600";
+    if (status === "FOUND") colorClass = "bg-green-100 text-green-600";
+    if (status === "LOST") colorClass = "bg-red-100 text-red-600";
+    if (status === "CLAIMED") colorClass = "bg-yellow-100 text-yellow-700";
+
+    return { label: status, className: colorClass };
   };
 
   const handleLoginSuccess = () => {
@@ -75,64 +53,96 @@ export default function LatestItems() {
     }
   };
 
-  const getStatusInfo = (item) => {
-    const status = (item.itemStatus || item.type || item.status || "POSTED").toUpperCase();
-    let colorClass = "bg-gray-100 text-gray-600";
-    if (status === "FOUND") colorClass = "bg-green-100 text-green-600";
-    if (status === "LOST") colorClass = "bg-red-100 text-red-600";
-    if (status === "CLAIMED") colorClass = "bg-yellow-100 text-yellow-700";
-    return { label: status, className: colorClass };
+  const handleItemRefresh = (updatedItemFromChild = null) => {
+    if (updatedItemFromChild?._id) {
+      setSelectedItem(updatedItemFromChild);
+      if (onItemUpdate) onItemUpdate(updatedItemFromChild);
+    }
   };
 
   const visibleItems = items.slice(0, 6);
 
   return (
     <section className="bg-gray-100 py-10 px-4 md:px-8 min-h-screen relative">
-      <div className={`max-w-7xl mx-auto flex flex-col transition-all duration-300 ${selectedItem ? "blur-sm" : ""}`}>
+      <div
+        className={`max-w-7xl mx-auto flex flex-col transition-all duration-300 ${
+          selectedItem ? "blur-sm" : ""
+        }`}
+      >
         <div className="text-center mb-10">
           <span className="text-blue-600 bg-blue-100 px-4 py-1 rounded-full text-sm font-medium uppercase tracking-wide">
             Recent Listings
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mt-3">Latest Items</h2>
+          <h2 className="text-3xl md:text-5xl font-bold text-gray-800 mt-3">
+            Latest Items
+          </h2>
         </div>
 
         <div className="grow">
           {loading ? (
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {[...Array(3)].map((_, index) => <SkeletonCard key={index} />)}
+              {[...Array(3)].map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
             </div>
           ) : (
             <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {visibleItems.map((item) => {
                 const status = getStatusInfo(item);
                 const claimed = isItemClaimed(item);
+
                 return (
                   <div
                     key={item._id}
-                    onClick={() => handleCardClick(item)} 
+                    onClick={() => handleCardClick(item)}
                     className="group cursor-pointer bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
                   >
                     <div className="bg-blue-50 h-48 flex items-center justify-center relative">
-                      <span className={`absolute top-4 left-4 z-10 text-[10px] font-bold px-3 py-1 rounded-full uppercase ${status.className}`}>
+                      <span
+                        className={`absolute top-4 left-4 z-10 text-[10px] font-bold px-3 py-1 rounded-full uppercase ${status.className}`}
+                      >
                         {status.label}
                       </span>
+
                       {item.image ? (
-                        <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <img
+                          src={item.image}
+                          alt={item.title || "item"}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        />
                       ) : (
                         <div className="text-6xl group-hover:scale-110 transition-transform duration-300">
-                          {item.category === "Electronics" ? "📱" : item.category === "ID Cards" ? "🪪" : "📦"}
+                          {item.category === "Electronics"
+                            ? "📱"
+                            : item.category === "ID Cards"
+                            ? "🪪"
+                            : "📦"}
                         </div>
                       )}
                     </div>
+
                     <div className="p-6">
                       <h3 className="text-xl font-bold text-gray-800 truncate">
-                        {item.itemTitle || item.itemName || item.title || "Untitled Item"}
+                        {item.itemTitle ||
+                          item.itemName ||
+                          item.title ||
+                          "Untitled Item"}
                       </h3>
-                      <p className="text-sm text-gray-500 mt-2 line-clamp-2 min-h-10">{item.description}</p>
+
+                      <p className="text-sm text-gray-500 mt-2 line-clamp-2 min-h-10">
+                        {item.description}
+                      </p>
+
                       <div className="text-xs text-gray-400 mt-4 space-y-1 font-medium">
                         <p>📍 {item.location}</p>
-                        <p>📅 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}</p>
+                        <p>
+                          📅{" "}
+                          {item.createdAt
+                            ? new Date(item.createdAt).toLocaleDateString()
+                            : "Recently"}
+                        </p>
                       </div>
+
                       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold uppercase ring-2 ring-blue-50">
@@ -142,30 +152,17 @@ export default function LatestItems() {
                             {item.name || item.postedBy?.name || "User"}
                           </span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleCardClick(item);
-                            }}
-                            className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
-                          >
-                            View →
-                          </button>
-                          {/* <button
-                            type="button"
-                            onClick={(event) => handleClaimClick(event, item)}
-                            disabled={claimed}
-                            className={`px-4 py-2 rounded-lg text-xs font-bold transition-colors ${
-                              claimed
-                                ? "bg-green-50 text-green-600 cursor-not-allowed"
-                                : "bg-gray-800 text-white hover:bg-gray-900"
-                            }`}
-                          >
-                            {claimed ? "Claimed" : "Claim"}
-                          </button> */}
-                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleCardClick(item);
+                          }}
+                          className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
+                        >
+                          View →
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -189,9 +186,17 @@ export default function LatestItems() {
 
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-          <div className="absolute inset-0 bg-black/30 backdrop-blur-md" onClick={() => setSelectedItem(null)}></div>
+          <div
+            className="absolute inset-0 bg-black/30 backdrop-blur-md"
+            onClick={() => setSelectedItem(null)}
+          ></div>
+
           <div className="relative z-50 w-full flex items-center justify-center">
-            <ItemDetails item={selectedItem} onClose={() => setSelectedItem(null)} />
+            <ItemDetails
+              item={selectedItem}
+              onClose={() => setSelectedItem(null)}
+              refreshItems={handleItemRefresh}
+            />
           </div>
         </div>
       )}

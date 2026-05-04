@@ -126,3 +126,9 @@ export const markItemAsClaimed = async (id, isClaiming = true) => {
 //   const userId = localStorage.getItem("userId");
 //   return apiClient.get(`/items?userId=${userId}`);
 // };
+
+
+// CONTACT ADMIN
+export const contactAdmin = (data) => {
+  return apiClient.post("/contacts", data);
+};

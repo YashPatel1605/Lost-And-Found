@@ -16,7 +16,7 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error),
 );
 
 apiClient.interceptors.response.use(
@@ -25,11 +25,10 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // Instead of redirecting to a page that doesn't exist, we let the UI handle it
       console.warn("Unauthorized: Session cleared");
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default apiClient;

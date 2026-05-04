@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 import {
   ChevronDown,
   HelpCircle,
@@ -91,6 +92,12 @@ function FAQItem({ item, index, openIndex, setOpenIndex }) {
 
 export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(0);
+  const navigate = useNavigate(); // Initialize the navigate function
+
+  // Navigation handler
+  const handleContactClick = () => {
+    navigate("/contact"); 
+  };
 
   return (
     <section className="min-h-screen bg-slate-50 py-12 sm:py-16 px-4">
@@ -148,7 +155,10 @@ export default function FAQ() {
                 Contact campus support if your item is urgent, valuable, or
                 already submitted to the security office.
               </p>
-              <button className="mt-5 inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 transition-colors">
+              <button 
+                onClick={handleContactClick}
+                className="mt-5 inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 transition-colors"
+              >
                 Contact Support
               </button>
             </div>
@@ -183,7 +193,7 @@ export default function FAQ() {
               </div>
             </div>
 
-            <div className="rounded-3xl bg-linear-to-r from-teal-700 to-teal-800 p-6 sm:p-8 text-white shadow-lg">
+            <div className="rounded-3xl bg-gradient-to-r from-teal-700 to-teal-800 p-6 sm:p-8 text-white shadow-lg">
               <h3 className="text-xl sm:text-2xl font-bold">
                 Still have questions?
               </h3>
@@ -193,7 +203,10 @@ export default function FAQ() {
                 ID and report date.
               </p>
               <div className="mt-6">
-                <button className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-teal-800 hover:bg-slate-100 transition-colors">
+                <button 
+                  onClick={handleContactClick}
+                  className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-teal-800 hover:bg-slate-100 transition-colors"
+                >
                   Contact Admin
                 </button>
               </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "react-toastify";
 import { getAllItems } from "../authApi/authApi";
 import SkeletonCard from "../SkeletonCard/SkeletonCard";
@@ -20,58 +20,102 @@ export default function BrowserAllItem({ searchQuery = "" }) {
   const [pendingItem, setPendingItem] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  const fetchItems = async (currentStatus, isBackgroundRefresh = false) => {
-    try {
-      if (!isBackgroundRefresh) setLoading(true);
-      const params = {};
-      const normalized = currentStatus.toLowerCase();
-      if (normalized === "found" || normalized === "lost") {
-        params.type = normalized;
-      } else if (normalized === "claim") {
-        params.type = "claim";
-      }
-      const res = await getAllItems(params);
-      const fetchedData = res.data?.data?.items || res.data?.items || res.data?.data || [];
-      setItems(Array.isArray(fetchedData) ? fetchedData : []);
-    } catch (error) {
-      if (!isBackgroundRefresh) toast.error("Could not load items");
-    } finally {
-      if (!isBackgroundRefresh) setLoading(false);
+  // --- Pagination State ---
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
+  const abortControllerRef = useRef(null);
+
+  const fetchItems = useCallback(async (currentStatus, page = 1, isBackground = false) => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
     }
-  };
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    try {
+      if (!isBackground) setLoading(true);
+
+      const params = {
+        page: page,
+        limit: 10
+      };
+
+      const normalized = currentStatus.toLowerCase();
+      if (["found", "lost", "claim"].includes(normalized)) {
+        params.type = normalized;
+      }
+
+      const res = await getAllItems(params, controller.signal);
+
+      const fetchedData = res.data?.data?.items || res.data?.items || [];
+      const paginationInfo = res.data?.data?.pagination || res.data?.pagination;
+
+      setItems(Array.isArray(fetchedData) ? fetchedData : []);
+      
+      if (paginationInfo) {
+        setTotalPages(paginationInfo.totalPages || 1);
+      }
+    } catch (error) {
+      if (error.name !== "CanceledError" && error.name !== "AbortError") {
+        console.error("Fetch failed:", error);
+        if (!isBackground) toast.error("Could not load items");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    fetchItems(statusFilter);
-  }, [statusFilter]);
+    setCurrentPage(1);
+    fetchItems(statusFilter, 1);
+  }, [statusFilter, fetchItems]);
 
+  useEffect(() => {
+    fetchItems(statusFilter, currentPage);
+  }, [currentPage, statusFilter, fetchItems]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // --- FIXED FUNCTION ---
   const getDisplayStatus = (item) => {
-    if (item.status === "CLAIMED" || item.itemStatus === "CLAIMED" || item.type === "claim")
+    // Sirf tab CLAIM dikhao jab explicitly type 'claim' ho ya status 'CLAIMED' ho
+    if (
+      item?.type?.toLowerCase() === "claim" || 
+      item?.status === "CLAIMED" || 
+      item?.itemStatus === "CLAIMED"
+    ) {
       return "CLAIM";
-    return (item.type || item.status || "POSTED").toUpperCase();
+    }
+    
+    // Warna jo actual type hai (FOUND, LOST) wo dikhao
+    return (item?.type || item?.status || "POSTED").toUpperCase();
   };
 
   const filteredData = items.filter((item) => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
-    const matchesSearch =
-      !normalizedSearch ||
-      [item.itemTitle, item.itemName, item.title, item.description, item.location].some((value) =>
-        String(value || "").toLowerCase().includes(normalizedSearch)
-      );
-    if (!matchesSearch) return false;
+    const matchesSearch = !normalizedSearch || [
+        item.itemTitle, item.itemName, item.title, item.name,
+        item.description, item.location, item.type
+      ].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
 
+    if (!matchesSearch) return false;
     if (dateFilter === "All Dates") return true;
+
     const dateStr = item.createdAt || item.date;
     if (!dateStr) return false;
-
     const itemDate = new Date(dateStr);
     const now = new Date();
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
+    
     if (dateFilter === "Today") return itemDate.toDateString() === now.toDateString();
     if (dateFilter === "This Week") {
-      const startOfWeek = new Date(startOfToday);
-      startOfWeek.setDate(startOfToday.getDate() - 7);
-      return itemDate >= startOfWeek;
+      const weekAgo = new Date();
+      weekAgo.setDate(now.getDate() - 7);
+      return itemDate >= weekAgo;
     }
     if (dateFilter === "This Month") {
       return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
@@ -89,131 +133,147 @@ export default function BrowserAllItem({ searchQuery = "" }) {
     }
   };
 
+  const handleItemRefresh = async (updatedItem = null) => {
+    if (updatedItem?._id) {
+      setItems((prev) => prev.map((it) => (it._id === updatedItem._id ? updatedItem : it)));
+    } else {
+      fetchItems(statusFilter, currentPage, true);
+    }
+  };
+
   return (
-    <>
-      <div className="min-h-screen bg-gray-100 p-4 md:p-8 relative">
-        <div className={`transition-all ${selectedItem ? "blur-sm" : ""}`}>
-          
-          {/* --- RESPONSIVE FILTER BAR --- */}
-          <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            
-            {/* Status Section: Row on PC, Row with scroll on Mobile */}
-            <div className="flex items-center gap-2 overflow-hidden">
-              <span className="text-gray-500 text-sm font-medium shrink-0">Status:</span>
-              <div className="flex gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-hide">
-                {["All Items", "Found", "Lost", "Claim"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                      statusFilter === status
-                        ? "bg-blue-600 text-white shadow-md"
-                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
+    <div className="min-h-screen bg-gray-100 p-4 md:p-8 relative">
+      <div className={`transition-all duration-300 ${selectedItem ? "blur-md" : ""}`}>
+        
+        {/* Filters Section */}
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="text-gray-500 text-sm font-bold shrink-0">Status:</span>
+            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {["All Items", "Found", "Lost", "Claim"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setStatusFilter(status)}
+                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
+                    statusFilter === status ? "bg-blue-600 text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
             </div>
-
-            {/* Date Dropdown: Full width on Mobile, Auto width on PC */}
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full md:w-auto px-3 py-2.5 rounded-xl bg-white border border-gray-200 text-sm outline-none cursor-pointer focus:ring-2 focus:ring-blue-100 transition-all"
-            >
-              <option value="All Dates">All Dates</option>
-              <option value="Today">Today</option>
-              <option value="This Week">This Week</option>
-              <option value="This Month">This Month</option>
-            </select>
           </div>
 
-          {/* --- ITEMS GRID --- */}
-          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            {loading ? (
-              Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)
-            ) : filteredData.length > 0 ? (
-              filteredData.map((item) => {
-                const displayStatus = getDisplayStatus(item);
-                return (
-                  <div
-                    key={item._id}
-                    onClick={() => handleCardClick(item)}
-                    className="bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all overflow-hidden cursor-pointer group"
-                  >
-                    {/* Responsive Image Height: h-64 for better mobile display, h-40 for PC */}
-                    <div className="bg-blue-50 h-64 md:h-40 flex items-center justify-center relative">
-                      <span
-                        className={`absolute top-3 left-3 z-10 text-[10px] px-3 py-1 rounded-full font-bold ${
-                          statusColor[displayStatus] || "bg-gray-200"
-                        }`}
-                      >
-                        {displayStatus}
-                      </span>
-                      {item.image ? (
-                        <img
-                          src={item.image}
-                          alt="item"
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="text-5xl">📦</div>
-                      )}
-                    </div>
-                    
-                    <div className="p-5">
-                      <h3 className="font-bold text-lg text-gray-800 truncate">
-                        {item.itemTitle || item.itemName || item.title || "Unknown Item"}
-                      </h3>
-                      <p className="text-sm text-gray-500 line-clamp-2 mt-2">
-                        {item.description}
-                      </p>
-                      <div className="text-xs text-gray-400 mt-4 flex flex-col gap-1">
-                        <span>📍 {item.location}</span>
-                        <span>
-                          📅 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed text-gray-400">
-                No active items found for the selected filters.
-              </div>
-            )}
-          </div>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full md:w-48 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all"
+          >
+            <option value="All Dates">All Dates</option>
+            <option value="Today">Today</option>
+            <option value="This Week">This Week</option>
+            <option value="This Month">This Month</option>
+          </select>
         </div>
 
-        {/* --- MODAL --- */}
-        {selectedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-            <div
-              className="absolute inset-0 bg-black/30 backdrop-blur-md"
-              onClick={() => setSelectedItem(null)}
-            ></div>
-            <div className="relative z-50 w-full max-w-2xl">
-              <ItemDetails
-                item={selectedItem}
-                onClose={() => setSelectedItem(null)}
-                refreshItems={() => fetchItems(statusFilter, true)}
-              />
+        {/* Items Grid */}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)
+          ) : filteredData.length > 0 ? (
+            filteredData.map((item) => (
+              <div
+                key={item._id}
+                onClick={() => handleCardClick(item)}
+                className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden cursor-pointer group flex flex-col h-full"
+              >
+                <div className="bg-gray-50 h-44 flex items-center justify-center relative overflow-hidden">
+                  <span className={`absolute top-4 left-4 z-10 text-[10px] px-3 py-1.5 rounded-lg font-black tracking-wider shadow-sm ${statusColor[getDisplayStatus(item)] || "bg-gray-200"}`}>
+                    {getDisplayStatus(item)}
+                  </span>
+                  {item.image ? (
+                    <img src={item.image} alt="item" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="text-5xl opacity-20">📦</div>
+                  )}
+                </div>
+                <div className="p-6 flex flex-col grow">
+                  <h3 className="font-extrabold text-lg text-gray-800 truncate">
+                    {item.itemTitle || item.itemName || item.title || "Unknown Item"}
+                  </h3>
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-2 leading-relaxed">{item.description}</p>
+                  <div className="mt-auto pt-4 flex flex-col gap-2">
+                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">📍 {item.location}</div>
+                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">📅 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}</div>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">
+              No items found.
             </div>
+          )}
+        </div>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="mt-12 flex justify-center items-center gap-4">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-blue-600 shadow-sm hover:bg-blue-50"
+              }`}
+            >
+              Previous
+            </button>
+            
+            <div className="flex gap-2">
+              {[...Array(totalPages)].map((_, index) => (
+                <button
+                  key={index + 1}
+                  onClick={() => handlePageChange(index + 1)}
+                  className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
+                    currentPage === index + 1 ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  {index + 1}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-blue-600 shadow-sm hover:bg-blue-50"
+              }`}
+            >
+              Next
+            </button>
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      {selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
+          <div className="relative z-50 w-full max-w-2xl">
+            <ItemDetails item={selectedItem} onClose={() => setSelectedItem(null)} refreshItems={handleItemRefresh} />
+          </div>
+        </div>
+      )}
 
       <LoginModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => {
-          if (pendingItem) setSelectedItem(pendingItem);
+          if (pendingItem) { setSelectedItem(pendingItem); setPendingItem(null); }
           setIsLoginModalOpen(false);
         }}
       />
-    </>
+    </div>
   );
 }

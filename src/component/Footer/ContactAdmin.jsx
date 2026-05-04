@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
 import { toast } from "react-toastify";
+import { contactAdmin } from "../authApi/authApi"; // Yeh aapki existing file hai jo apiClient use karti hai
 
 export default function ContactAdmin() {
   const [formData, setFormData] = useState({
-    name: "",
+    fullName: "", // CHANGE 1: 'name' se 'fullName' kar diya
     email: "",
     subject: "Claim Inquiry",
     message: "",
@@ -23,7 +24,11 @@ export default function ContactAdmin() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
+    if (
+      !formData.fullName.trim() ||
+      !formData.email.trim() ||
+      !formData.message.trim()
+    ) {
       toast.error("Please fill in all required fields.");
       return;
     }
@@ -31,18 +36,31 @@ export default function ContactAdmin() {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      // Yeh call aapke authApi.jsx mein jayegi, wahan se apiClient mein, 
+      // aur apiClient automatically https://lost-found-u86a.onrender.com/api/contacts/ par hit karegi
+      const response = await contactAdmin(formData);
+      const result = response.data;
 
-      toast.success("Message sent to Admin! We will get back to you soon. ✅");
+      console.log("Backend Response:", result);
 
-      setFormData({
-        name: "",
-        email: "",
-        subject: "Claim Inquiry",
-        message: "",
-      });
+      // CHANGE 2: Response check ka logic fix kiya
+      // Agar backend koi error ya 400+ status code nahi bhej raha, toh isko success maan lo
+      if (result.error || result.statusCode >= 400) {
+        throw new Error(result.message || "Failed to send message");
+      } else {
+        toast.success(result.message || "Message sent successfully! We've received your inquiry. ✅");
+        setFormData({
+          fullName: "",
+          email: "",
+          subject: "Claim Inquiry",
+          message: "",
+        });
+      }
     } catch (error) {
-      toast.error("Something went wrong. Please try again.");
+      console.error("Contact form error:", error.response?.data || error.message);
+      
+      const errorMessage = error.response?.data?.message || error.message || "Something went wrong. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -67,17 +85,17 @@ export default function ContactAdmin() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label
-                    htmlFor="name"
+                    htmlFor="fullName"
                     className="block text-sm font-semibold text-slate-700 mb-2"
                   >
                     Full Name
                   </label>
                   <input
-                    id="name"
+                    id="fullName"
                     type="text"
-                    name="name"
+                    name="fullName" // Input field ka name bhi fullName hai
                     required
-                    value={formData.name}
+                    value={formData.fullName}
                     onChange={handleChange}
                     placeholder="John Doe"
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none transition"
@@ -163,7 +181,6 @@ export default function ContactAdmin() {
           <div className="space-y-6">
             <div className="bg-teal-700 rounded-3xl p-8 text-white shadow-lg">
               <h3 className="text-xl font-bold mb-6">Contact Information</h3>
-
               <div className="space-y-6">
                 <div className="flex items-start gap-4">
                   <div className="bg-white/10 p-2 rounded-lg">
