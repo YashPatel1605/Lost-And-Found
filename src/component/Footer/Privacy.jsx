@@ -1,130 +1,165 @@
 import React from "react";
-import { ShieldCheck, Lock, Eye, Users, FileText, Globe } from "lucide-react";
+import {
+  ShieldCheck,
+  Lock,
+  Eye,
+  Users,
+  FileText,
+  Globe,
+  ChevronRight,
+} from "lucide-react";
 
 export default function PrivacyPolicy() {
   const sections = [
-    { id: "collection", title: "Data Collection", icon: <Eye size={20} /> },
-    { id: "usage", title: "How We Use Data", icon: <FileText size={20} /> },
-    { id: "sharing", title: "Data Sharing", icon: <Users size={20} /> },
-    { id: "security", title: "Security Measures", icon: <Lock size={20} /> },
-    { id: "cookies", title: "Cookies Policy", icon: <Globe size={20} /> },
+    { id: "collection", title: "Data Collection", icon: <Eye size={18} /> },
+    { id: "usage", title: "How We Use Data", icon: <FileText size={18} /> },
+    { id: "sharing", title: "Data Sharing", icon: <Users size={18} /> },
+    { id: "security", title: "Security Measures", icon: <Lock size={18} /> },
+    { id: "cookies", title: "Cookies Policy", icon: <Globe size={18} /> },
   ];
 
   const scrollToSection = (id) => {
     const element = document.getElementById(id);
     if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+      element.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Header */}
-      <div className="bg-gray-900 py-16 px-4 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-500/10 rounded-2xl mb-4">
-          <ShieldCheck className="text-blue-400 w-10 h-10" />
-        </div>
-        <h1 className="text-4xl font-bold text-white">Privacy Policy</h1>
-        <p className="mt-4 text-gray-400 max-w-xl mx-auto">
-          Last updated: April 30, 2026. We value your trust and are committed to 
-          protecting your personal information.
-        </p>
-      </div>
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-teal-200 bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">
+              <ShieldCheck size={16} />
+              Privacy & Trust
+            </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-12">
-        <div className="flex flex-col lg:flex-row gap-12">
-          
-          {/* Sticky Sidebar Navigation */}
-          <aside className="lg:w-1/4">
-            <div className="sticky top-8 space-y-1">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 px-4">
+            <h1 className="mt-5 text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-slate-950">
+              Privacy Policy
+            </h1>
+
+            <p className="mt-4 text-base sm:text-lg leading-8 text-slate-600 max-w-2xl">
+              Last updated: April 30, 2026. We value your trust and explain how
+              your information is collected, used, and protected in the lost-and-found platform.
+            </p>
+
+            <div className="mt-6 flex flex-wrap gap-3 text-sm">
+              <span className="rounded-full bg-slate-100 px-4 py-2 text-slate-700">
+                Campus lost & found
+              </span>
+              <span className="rounded-full bg-slate-100 px-4 py-2 text-slate-700">
+                Student data protected
+              </span>
+              <span className="rounded-full bg-slate-100 px-4 py-2 text-slate-700">
+                Transparent policies
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-8 lg:gap-12">
+          <aside className="lg:sticky lg:top-8 h-fit">
+            <div className="rounded-3xl border border-slate-200 bg-white shadow-sm p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-500 mb-4">
                 Contents
               </p>
-              {sections.map((section) => (
-                <button
-                  key={section.id}
-                  onClick={() => scrollToSection(section.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left text-gray-600 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all group"
-                >
-                  <span className="text-gray-400 group-hover:text-blue-500 transition-colors">
-                    {section.icon}
-                  </span>
-                  <span className="font-medium">{section.title}</span>
-                </button>
-              ))}
+
+              <nav className="space-y-2">
+                {sections.map((section) => (
+                  <button
+                    key={section.id}
+                    type="button"
+                    onClick={() => scrollToSection(section.id)}
+                    className="w-full flex items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-slate-700 hover:bg-teal-50 hover:text-teal-800 transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <span className="text-slate-400">{section.icon}</span>
+                      <span className="text-sm font-medium">{section.title}</span>
+                    </span>
+                    <ChevronRight size={16} className="text-slate-300" />
+                  </button>
+                ))}
+              </nav>
+            </div>
+
+            <div className="mt-6 rounded-3xl bg-slate-900 text-white p-6 shadow-lg">
+              <p className="text-sm font-semibold text-teal-300 uppercase tracking-[0.16em]">
+                Privacy note
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-300">
+                We only use your data to support item recovery, platform safety,
+                and account communication.
+              </p>
             </div>
           </aside>
 
-          {/* Policy Content */}
-          <main className="lg:w-3/4 space-y-12 pb-24 text-gray-700 leading-relaxed">
-            
-            <section id="collection">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Data We Collect</h2>
-              <p className="mb-4">
-                To provide our Lost & Found services, we collect information that you 
-                voluntarily provide to us when you:
+          <section className="space-y-6">
+            <article id="collection" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-950">1. Data We Collect</h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                To provide our lost-and-found services, we collect information you voluntarily submit when you register, post reports, or contact support.
               </p>
-              <ul className="list-disc pl-6 space-y-2">
-                <li>Register an account (Name, Email, Student ID).</li>
-                <li>Post a report (Item descriptions, photos, location data).</li>
-                <li>Communicate with other users or admins.</li>
+              <ul className="mt-4 space-y-3 text-slate-600">
+                <li className="flex gap-3"><span className="mt-2 h-2 w-2 rounded-full bg-teal-600" />Account details such as name, email, and student ID.</li>
+                <li className="flex gap-3"><span className="mt-2 h-2 w-2 rounded-full bg-teal-600" />Report details such as item descriptions, photos, and location data.</li>
+                <li className="flex gap-3"><span className="mt-2 h-2 w-2 rounded-full bg-teal-600" />Messages sent to admins or other verified users.</li>
               </ul>
-            </section>
+            </article>
 
-            <section id="usage">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">2. How We Use Your Information</h2>
-              <p>
-                We use the information we collect primarily to facilitate the recovery 
-                of lost items. This includes:
+            <article id="usage" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-950">2. How We Use Your Information</h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                We use collected information to help match lost items with owners, improve communication, and support platform operations.
               </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="font-bold text-sm text-blue-600 mb-1">Item Matching</p>
-                  <p className="text-sm">Connecting found items with potential owners based on descriptions.</p>
+              <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold text-teal-700">Item Matching</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Helps connect found items with owners using descriptions, dates, and locations.
+                  </p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                  <p className="font-bold text-sm text-blue-600 mb-1">Notifications</p>
-                  <p className="text-sm">Sending alerts when a matching item is reported in your area.</p>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                  <p className="text-sm font-semibold text-teal-700">Notifications</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Sends alerts when relevant reports or claims match your submitted item.
+                  </p>
                 </div>
               </div>
-            </section>
+            </article>
 
-            <section id="sharing">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">3. Sharing of Information</h2>
-              <p>
-                We do **not** sell your personal data to third parties. Your contact information 
-                is only revealed to other users when a claim is verified or if you choose 
-                to make it public in your report.
+            <article id="sharing" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-950">3. Data Sharing</h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                We do not sell your personal data. Contact details are only shared when a claim is verified or when you explicitly choose to make information public in a report.
               </p>
-            </section>
+            </article>
 
-            <section id="security">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Data Security</h2>
-              <p>
-                We implement a variety of security measures to maintain the safety of 
-                your personal information. All sensitive data is transmitted via 
-                Secure Socket Layer (SSL) technology and encrypted in our database.
+            <article id="security" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-950">4. Security Measures</h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                We use security controls to protect personal information in transit and at rest. Sensitive information is handled using secure transmission and database protection practices.
               </p>
-            </section>
+            </article>
 
-            <section id="cookies">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Cookies Policy</h2>
-              <p>
-                We use cookies to understand and save your preferences for future visits. 
-                You can choose to turn off all cookies via your browser settings, but 
-                some features of the site may not function properly.
+            <article id="cookies" className="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm">
+              <h2 className="text-2xl font-bold text-slate-950">5. Cookies Policy</h2>
+              <p className="mt-4 leading-7 text-slate-600">
+                Cookies help us remember preferences and improve the experience. You can disable cookies in your browser, but some features may not work as expected.
               </p>
-            </section>
+            </article>
 
-            <div className="pt-8 border-t border-gray-100">
-              <p className="text-sm text-gray-500 italic">
-                If you have any questions regarding this privacy policy, you may 
-                contact us using the information on our Contact page.
+            <footer className="rounded-3xl bg-teal-700 p-6 sm:p-8 text-white shadow-lg">
+              <h3 className="text-xl font-bold">Questions about privacy?</h3>
+              <p className="mt-3 max-w-2xl leading-7 text-teal-50">
+                If you have questions about this policy, contact us through the Contact page for support.
               </p>
-            </div>
-          </main>
+            </footer>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

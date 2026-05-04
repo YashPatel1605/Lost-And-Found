@@ -35,7 +35,11 @@ export default function BrowserLostFound({ onSearch }) {
             type="text"
             placeholder="Search by title, description, location..."
             value={inputValue}
-            onChange={(event) => setInputValue(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              setInputValue(value);
+              onSearch?.(value.trim());
+            }}
             onKeyDown={handleKeyDown}
             className="w-full flex-1 px-4 py-3 rounded-xl bg-[#1e2f4d] text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-blue-500"
           />

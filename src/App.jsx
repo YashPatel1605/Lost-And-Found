@@ -48,7 +48,6 @@ function App() {
         <Route path="/contact" element={<ContactAdmin />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
-
         
         {/* <Route path="/login" element={<Login />} /> */}
         {/* <Route path="/signup" element={<Signup />} /> */}
