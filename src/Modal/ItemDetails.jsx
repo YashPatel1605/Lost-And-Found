@@ -9,6 +9,9 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [wasUpdated, setWasUpdated] = useState(false);
 
+  if (!item) return null;
+
+  //  Current user
   let user = null;
   try {
     user = JSON.parse(localStorage.getItem("user") || "null");
@@ -33,6 +36,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     );
   };
 
+  //  Owner / reporter check 
   const isReportUser =
     matchesCurrentUser(item?.reportedBy?._id, item?.reportedBy?.email) ||
     matchesCurrentUser(item?.reportedBy?.id, item?.reportedBy?.email) ||
@@ -42,7 +46,47 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     matchesCurrentUser(item?.createdBy, item?.email) ||
     matchesCurrentUser(null, item?.email);
 
+  const canChangeStatus = isReportUser;
+
+  // Claimed state (Found ≠ Claimed) 
+  const getInitialClaimState = (it) => {
+    const status =
+      it?.itemStatus ||
+      it?.status ||
+      it?.type ||
+      "";
+
+    const normalized = String(status).toLowerCase();
+    return normalized === "claimed" || normalized === "claim";
+  };
+
+  const [isClaimed, setIsClaimed] = useState(getInitialClaimState(item));
+
+  useEffect(() => {
+    const claimed = getInitialClaimState(item);
+    setIsClaimed(claimed);
+    if (claimed) setWasUpdated(true);
+  }, [item?.itemStatus, item?.status, item?.type]);
+
+  useEffect(() => {
+    setHasSubmittedClaim(false);
+    setIsChecked(false);
+  }, [item?._id]);
+
+  //  Claimed users list 
   const claimedUsers = useMemo(() => {
+    const hasAnyClaimField =
+      item?.claimedBy ||
+      item?.claimedUsers ||
+      item?.claimUsers ||
+      item?.claimRequests ||
+      item?.claimRequestedBy ||
+      item?.claimedByUser ||
+      item?.claimer ||
+      item?.claimants;
+
+    if (!hasAnyClaimField) return [];
+
     const rawSources = [
       item?.claimedBy,
       item?.claimedUsers,
@@ -71,7 +115,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
           u?.username ||
           u?.requestedBy?.name ||
           u?.user?.name ||
-          "User",
+          "",
         email:
           u?.email ||
           u?.requestedBy?.email ||
@@ -98,8 +142,23 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
       );
     });
 
-    return uniqueUsers;
-  }, [item]);
+    const withoutOwner = uniqueUsers.filter((u) => {
+      const isCurrentUser = matchesCurrentUser(u._id, u.email);
+      const isReportedBy =
+        item?.reportedBy &&
+        (String(item.reportedBy._id) === u._id ||
+          item.reportedBy.email === u.email);
+      const isPostedBy =
+        item?.postedBy &&
+        (String(item.postedBy._id) === u._id ||
+          item.postedBy.email === u.email);
+      const isItemEmailOwner = item?.email && item.email === u.email;
+
+      return !(isCurrentUser || isReportedBy || isPostedBy || isItemEmailOwner);
+    });
+
+    return withoutOwner;
+  }, [item, matchesCurrentUser]);
 
   const isClaimRequester = claimedUsers.some(
     (claimUser) =>
@@ -107,33 +166,9 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
       matchesCurrentUser(claimUser?.id, claimUser?.email)
   );
 
-  const canChangeStatus = isReportUser;
-
-  const [isClaimed, setIsClaimed] = useState(
-    item?.find === true ||
-      item?.status === "CLAIMED" ||
-      item?.itemStatus === "CLAIMED"
-  );
-
-  useEffect(() => {
-    const initialState =
-      item?.find === true ||
-      item?.status === "CLAIMED" ||
-      item?.itemStatus === "CLAIMED";
-
-    setIsClaimed(initialState);
-    if (initialState) setWasUpdated(true);
-  }, [item?.find, item?.status, item?.itemStatus]);
-
-  useEffect(() => {
-    setHasSubmittedClaim(false);
-    setIsChecked(false);
-  }, [item?._id]);
-
-  if (!item) return null;
-
-  // owner restriction hata di gayi hai taki claimed users sabko dikh sake
-  const showClaimRequestedBySection = isClaimed && claimedUsers.length > 0;
+  //  UI flags 
+  const showClaimRequestedBySection =
+    isClaimed && claimedUsers.length > 0 && canChangeStatus; 
 
   const showClaimRequesterMessage =
     !canChangeStatus && isClaimed && (isClaimRequester || hasSubmittedClaim);
@@ -143,6 +178,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   const showOwnerClaimBanner = canChangeStatus && isClaimed;
 
+  //  Actions
   const handleSubmitClaim = async () => {
     try {
       setIsSubmitting(true);
@@ -159,7 +195,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
       setTimeout(() => onClose(), 1500);
     } catch (error) {
       const errorMsg =
-        error.response?.data?.message || "Failed to submit claim ❌";
+        error?.response?.data?.message || "Failed to submit claim ❌";
       toast.error(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -183,20 +219,22 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     } catch (error) {
       console.error("Toggle claimed error:", error);
       const errorMsg =
-        error.response?.data?.message || "Failed to update status ❌";
+        error?.response?.data?.message || "Failed to update status ❌";
       toast.error(errorMsg);
     } finally {
       setIsUpdating(false);
     }
   };
 
-  const getDisplayStatus = (item) => {
-    const rawStatus = (
-      item?.find === true
-        ? "CLAIM"
-        : item?.itemStatus || item?.status || item?.type || "POSTED"
-    ).toUpperCase();
+  //  Status badges 
+  const getDisplayStatus = (it) => {
+    const status =
+      it?.itemStatus ||
+      it?.status ||
+      it?.type ||
+      "POSTED";
 
+    const rawStatus = String(status).toUpperCase();
     return rawStatus === "CLAIMED" ? "CLAIM" : rawStatus;
   };
 
@@ -210,6 +248,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   const currentStatus = isClaimed ? "CLAIM" : getDisplayStatus(item);
 
+  //  Render 
   return (
     <div className="w-full max-w-[400px] rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease]">
       <button
@@ -267,6 +306,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex flex-col gap-3">
+            {/* Owner / Contact */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-inner text-sm">
@@ -300,7 +340,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             </div>
 
-            {showClaimRequestedBySection && (
+            {/* Claim requested by (only for owner) */}
+            {showClaimRequestedBySection && claimedUsers.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-green-200 pt-3 bg-green-50/50 -mx-3 px-3 rounded-b-lg">
                 <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
                   ✅ Claim Requested By ({claimedUsers.length})
@@ -338,6 +379,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
+            {/* Owner controls */}
             {canChangeStatus && (
               <div className="flex flex-col gap-2 border-t border-blue-100 pt-3">
                 <div className="flex items-center justify-between gap-3">
@@ -396,6 +438,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
+            {/* Claim form for normal users */}
             {!canChangeStatus && !isClaimed && (
               <div className="flex flex-col gap-3">
                 <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
@@ -421,6 +464,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
+            {/* Messages */}
             {showClaimRequesterMessage && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs font-bold text-green-700 text-center">

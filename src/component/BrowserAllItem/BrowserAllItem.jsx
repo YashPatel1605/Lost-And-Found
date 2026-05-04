@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { toast } from "react-toastify";
 import { getAllItems } from "../authApi/authApi";
 import SkeletonCard from "../SkeletonCard/SkeletonCard";
@@ -81,9 +81,7 @@ export default function BrowserAllItem({ searchQuery = "" }) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // --- FIXED FUNCTION ---
   const getDisplayStatus = (item) => {
-    // Sirf tab CLAIM dikhao jab explicitly type 'claim' ho ya status 'CLAIMED' ho
     if (
       item?.type?.toLowerCase() === "claim" || 
       item?.status === "CLAIMED" || 
@@ -91,37 +89,53 @@ export default function BrowserAllItem({ searchQuery = "" }) {
     ) {
       return "CLAIM";
     }
-    
-    // Warna jo actual type hai (FOUND, LOST) wo dikhao
     return (item?.type || item?.status || "POSTED").toUpperCase();
   };
 
-  const filteredData = items.filter((item) => {
-    const normalizedSearch = searchQuery.trim().toLowerCase();
-    const matchesSearch = !normalizedSearch || [
-        item.itemTitle, item.itemName, item.title, item.name,
-        item.description, item.location, item.type
-      ].some((value) => String(value || "").toLowerCase().includes(normalizedSearch));
-
-    if (!matchesSearch) return false;
-    if (dateFilter === "All Dates") return true;
-
-    const dateStr = item.createdAt || item.date;
-    if (!dateStr) return false;
-    const itemDate = new Date(dateStr);
-    const now = new Date();
+  // --- FIXED: Use useMemo to properly react to searchQuery changes ---
+  const filteredData = useMemo(() => {
+    const normalizedSearch = (searchQuery || "").trim().toLowerCase();
     
-    if (dateFilter === "Today") return itemDate.toDateString() === now.toDateString();
-    if (dateFilter === "This Week") {
-      const weekAgo = new Date();
-      weekAgo.setDate(now.getDate() - 7);
-      return itemDate >= weekAgo;
-    }
-    if (dateFilter === "This Month") {
-      return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
-    }
-    return true;
-  });
+    return items.filter((item) => {
+      // Search filter
+      if (normalizedSearch) {
+        const searchFields = [
+          item.itemTitle,
+          item.itemName,
+          item.title,
+          item.name,
+          item.description,
+          item.location,
+          item.type
+        ];
+        const matchesSearch = searchFields.some((field) => 
+          field !== null && 
+          field !== undefined && 
+          String(field).toLowerCase().includes(normalizedSearch)
+        );
+        if (!matchesSearch) return false;
+      }
+      
+      // Date filter
+      if (dateFilter === "All Dates") return true;
+
+      const dateStr = item.createdAt || item.date;
+      if (!dateStr) return false;
+      const itemDate = new Date(dateStr);
+      const now = new Date();
+      
+      if (dateFilter === "Today") return itemDate.toDateString() === now.toDateString();
+      if (dateFilter === "This Week") {
+        const weekAgo = new Date();
+        weekAgo.setDate(now.getDate() - 7);
+        return itemDate >= weekAgo;
+      }
+      if (dateFilter === "This Month") {
+        return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+      }
+      return true;
+    });
+  }, [items, searchQuery, dateFilter]);
 
   const handleCardClick = (item) => {
     const token = localStorage.getItem("token");
