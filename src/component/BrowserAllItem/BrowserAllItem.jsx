@@ -20,7 +20,6 @@ export default function BrowserAllItem({ searchQuery = "" }) {
   const [pendingItem, setPendingItem] = useState(null);
   const [selectedItem, setSelectedItem] = useState(null);
 
-  // --- Pagination State ---
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
@@ -63,7 +62,7 @@ export default function BrowserAllItem({ searchQuery = "" }) {
         if (!isBackground) toast.error("Could not load items");
       }
     } finally {
-      setLoading(false);
+      if (!isBackground) setLoading(false);
     }
   }, []);
 
@@ -92,12 +91,10 @@ export default function BrowserAllItem({ searchQuery = "" }) {
     return (item?.type || item?.status || "POSTED").toUpperCase();
   };
 
-  // --- FIXED: Use useMemo to properly react to searchQuery changes ---
   const filteredData = useMemo(() => {
     const normalizedSearch = (searchQuery || "").trim().toLowerCase();
     
     return items.filter((item) => {
-      // Search filter
       if (normalizedSearch) {
         const searchFields = [
           item.itemTitle,
@@ -116,7 +113,6 @@ export default function BrowserAllItem({ searchQuery = "" }) {
         if (!matchesSearch) return false;
       }
       
-      // Date filter
       if (dateFilter === "All Dates") return true;
 
       const dateStr = item.createdAt || item.date;
@@ -160,16 +156,18 @@ export default function BrowserAllItem({ searchQuery = "" }) {
       <div className={`transition-all duration-300 ${selectedItem ? "blur-md" : ""}`}>
         
         {/* Filters Section */}
-        <div className="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-2 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm p-4 mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
             <span className="text-gray-500 text-sm font-bold shrink-0">Status:</span>
-            <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            <div className="flex gap-2 overflow-x-auto no-scrollbar py-1">
               {["All Items", "Found", "Lost", "Claim"].map((status) => (
                 <button
                   key={status}
                   onClick={() => setStatusFilter(status)}
-                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all whitespace-nowrap ${
-                    statusFilter === status ? "bg-blue-600 text-white shadow-md" : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  className={`px-5 py-2 rounded-full text-sm font-bold transition-all duration-200 whitespace-nowrap cursor-pointer active:scale-95 ${
+                    statusFilter === status 
+                      ? "bg-blue-600 text-white shadow-md" 
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                   }`}
                 >
                   {status}
@@ -178,20 +176,27 @@ export default function BrowserAllItem({ searchQuery = "" }) {
             </div>
           </div>
 
-          <select
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            className="w-full md:w-48 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all"
-          >
-            <option value="All Dates">All Dates</option>
-            <option value="Today">Today</option>
-            <option value="This Week">This Week</option>
-            <option value="This Month">This Month</option>
-          </select>
+          <div className="relative">
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="w-full md:w-52 px-4 py-2.5 rounded-xl bg-gray-50 border border-gray-100 text-sm font-bold outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer appearance-none"
+            >
+              <option value="All Dates">All Dates</option>
+              <option value="Today">Today</option>
+              <option value="This Week">This Week</option>
+              <option value="This Month">This Month</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Items Grid */}
-        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
           {loading ? (
             Array(6).fill(0).map((_, i) => <SkeletonCard key={i} />)
           ) : filteredData.length > 0 ? (
@@ -199,68 +204,87 @@ export default function BrowserAllItem({ searchQuery = "" }) {
               <div
                 key={item._id}
                 onClick={() => handleCardClick(item)}
-                className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all overflow-hidden cursor-pointer group flex flex-col h-full"
+                className="bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col h-full border border-transparent hover:border-blue-100"
               >
-                <div className="bg-gray-50 h-44 flex items-center justify-center relative overflow-hidden">
+                {/* Fixed Image Wrapper */}
+                <div className="bg-gray-50 h-52 flex items-center justify-center relative overflow-hidden p-2">
                   <span className={`absolute top-4 left-4 z-10 text-[10px] px-3 py-1.5 rounded-lg font-black tracking-wider shadow-sm ${statusColor[getDisplayStatus(item)] || "bg-gray-200"}`}>
                     {getDisplayStatus(item)}
                   </span>
                   {item.image ? (
-                    <img src={item.image} alt="item" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <img 
+                      src={item.image} 
+                      alt="item" 
+                      // Changed from object-cover to object-contain to show full image
+                      className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-700" 
+                    />
                   ) : (
                     <div className="text-5xl opacity-20">📦</div>
                   )}
                 </div>
+
+                {/* Content */}
                 <div className="p-6 flex flex-col grow">
-                  <h3 className="font-extrabold text-lg text-gray-800 truncate">
+                  <h3 className="font-extrabold text-lg text-gray-800 truncate group-hover:text-blue-600 transition-colors">
                     {item.itemTitle || item.itemName || item.title || "Unknown Item"}
                   </h3>
-                  <p className="text-sm text-gray-500 line-clamp-2 mt-2 leading-relaxed">{item.description}</p>
-                  <div className="mt-auto pt-4 flex flex-col gap-2">
-                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">📍 {item.location}</div>
-                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">📅 {item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "Recently"}</div>
+                  <p className="text-sm text-gray-500 line-clamp-2 mt-2 leading-relaxed grow">
+                    {item.description}
+                  </p>
+                  
+                  <div className="mt-6 pt-4 border-t border-gray-50 flex flex-col gap-2">
+                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">
+                      <span className="text-blue-500">📍</span> {item.location}
+                    </div>
+                    <div className="flex items-center text-xs font-bold text-gray-400 gap-2">
+                      <span className="text-blue-500">📅</span> {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : "Recently"}
+                    </div>
                   </div>
                 </div>
               </div>
             ))
           ) : (
-            <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">
-              No items found.
+            <div className="col-span-full py-32 text-center bg-white rounded-3xl border-2 border-dashed border-gray-200 text-gray-400 font-bold">
+              <div className="text-6xl mb-4">🔍</div>
+              No items found matching your filters.
             </div>
           )}
         </div>
 
         {/* Pagination Controls */}
-        {totalPages > 1 && (
-          <div className="mt-12 flex justify-center items-center gap-4">
+        {totalPages > 1 && !loading && (
+          <div className="mt-16 flex justify-center items-center gap-2 md:gap-4 pb-10">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
-              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 currentPage === 1 ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-blue-600 shadow-sm hover:bg-blue-50"
               }`}
             >
               Previous
             </button>
             
-            <div className="flex gap-2">
-              {[...Array(totalPages)].map((_, index) => (
-                <button
-                  key={index + 1}
-                  onClick={() => handlePageChange(index + 1)}
-                  className={`w-10 h-10 rounded-xl font-bold text-sm transition-all ${
-                    currentPage === index + 1 ? "bg-blue-600 text-white shadow-md" : "bg-white text-gray-500 hover:bg-gray-50"
-                  }`}
-                >
-                  {index + 1}
-                </button>
-              ))}
+            <div className="flex gap-1 md:gap-2">
+              {[...Array(totalPages)].map((_, index) => {
+                const pageNum = index + 1;
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => handlePageChange(pageNum)}
+                    className={`w-10 h-10 rounded-xl font-bold text-sm transition-all cursor-pointer ${
+                      currentPage === pageNum ? "bg-blue-600 text-white shadow-md scale-110" : "bg-white text-gray-500 hover:bg-gray-50"
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
             </div>
 
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
-              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+              className={`px-4 py-2 rounded-xl font-bold text-sm transition-all cursor-pointer ${
                 currentPage === totalPages ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-white text-blue-600 shadow-sm hover:bg-blue-50"
               }`}
             >
@@ -273,8 +297,8 @@ export default function BrowserAllItem({ searchQuery = "" }) {
       {/* Modals */}
       {selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
-          <div className="relative z-50 w-full max-w-2xl">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity" onClick={() => setSelectedItem(null)}></div>
+          <div className="relative z-50 w-full max-w-2xl animate-in fade-in zoom-in duration-300">
             <ItemDetails item={selectedItem} onClose={() => setSelectedItem(null)} refreshItems={handleItemRefresh} />
           </div>
         </div>
@@ -284,7 +308,10 @@ export default function BrowserAllItem({ searchQuery = "" }) {
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         onLoginSuccess={() => {
-          if (pendingItem) { setSelectedItem(pendingItem); setPendingItem(null); }
+          if (pendingItem) { 
+            setSelectedItem(pendingItem); 
+            setPendingItem(null); 
+          }
           setIsLoginModalOpen(false);
         }}
       />

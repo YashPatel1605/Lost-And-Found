@@ -10,11 +10,40 @@ const myPostsStore = {
   promise: null,
 };
 
+const getItemStatus = (item) => {
+  if (item?.find === true) return "CLAIMED";
+
+  const rawStatus = String(
+    item?.status || item?.itemStatus || item?.type || "PENDING"
+  ).toUpperCase();
+
+  return rawStatus === "CLAIM" ? "CLAIMED" : rawStatus;
+};
+
+const isItemOwnedByUser = (item, userId) => {
+  const normalizedUserId = String(userId || "");
+  const ownerId = String(item?.userId || "");
+
+  if (ownerId) {
+    return ownerId === normalizedUserId;
+  }
+
+  const fallbackOwnerId = String(
+    item?.createdBy || item?.postedBy?._id || item?.postedBy?.id || ""
+  );
+
+  return fallbackOwnerId === normalizedUserId;
+};
+
+const shouldShowInMyPosts = (item, userId) => {
+  return isItemOwnedByUser(item, userId) && getItemStatus(item) !== "CLAIMED";
+};
+
 const TableRowSkeleton = () => (
   <tr className="border-t animate-pulse">
     <td className="p-4">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-10 h-10 bg-gray-200 rounded-lg flex-shrink-0"></div>
+        <div className="w-10 h-10 bg-gray-200 rounded-lg shrink-0"></div>
         <div className="h-4 bg-gray-200 rounded w-24"></div>
       </div>
     </td>
@@ -86,12 +115,7 @@ export default function MyPosts() {
       myPostsStore.promise = getAllItems().then((res) => {
         const data = res?.data?.data?.items || res?.data?.data || res?.data || [];
         const allItems = Array.isArray(data) ? data : [];
-        const myItems = allItems.filter(
-          (item) =>
-            String(item.userId) === String(userId) ||
-            String(item.reportedBy?._id) === String(userId) ||
-            String(item.createdBy) === String(userId)
-        );
+        const myItems = allItems.filter((item) => shouldShowInMyPosts(item, userId));
         myPostsStore.items = myItems;
         return myItems;
       });
@@ -154,10 +178,7 @@ export default function MyPosts() {
   const handleEdit = (id) => navigate(`/edit-item/${id}`);
 
   const normalizeStatus = (item) => {
-    if (item?.find === true) return "CLAIMED";
-    const raw = String(item?.status || item?.itemStatus || item?.type || "PENDING").toUpperCase();
-    if (raw === "CLAIM") return "CLAIMED";
-    return raw;
+    return getItemStatus(item);
   };
 
   const getDisplayStatus = (item) => {
@@ -193,15 +214,19 @@ export default function MyPosts() {
     const currentItem = items.find((item) => item._id === id);
     if (!currentItem) return;
 
+    const userId = localStorage.getItem("userId");
     const previousItems = [...items];
     const updatedItem = buildUpdatedItem(currentItem, newStatus);
+    const shouldKeepItem = shouldShowInMyPosts(updatedItem, userId);
 
     try {
       updatingItemsRef.current.add(id);
       setUpdatingItemId(id);
 
       setItems((prev) => {
-        const next = prev.map((item) => (item._id === id ? updatedItem : item));
+        const next = shouldKeepItem
+          ? prev.map((item) => (item._id === id ? updatedItem : item))
+          : prev.filter((item) => item._id !== id);
         myPostsStore.items = next;
         return next;
       });
@@ -235,7 +260,7 @@ export default function MyPosts() {
             <div className="min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">My Posts</h1>
               <p className="text-gray-500 text-sm sm:text-base">
-                Manage all items you've reported.
+                Manage your active items linked to your account.
               </p>
             </div>
             <button
@@ -248,7 +273,7 @@ export default function MyPosts() {
 
           <div className="hidden md:block bg-white rounded-xl shadow overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left">
+              <table className="w-full min-w-225 text-left">
                 <thead className="bg-gray-100 text-gray-600 text-sm uppercase">
                   <tr>
                     <th className="p-4 whitespace-nowrap">Item</th>
@@ -275,7 +300,7 @@ export default function MyPosts() {
                         <tr key={item._id} className="border-t">
                           <td className="p-4">
                             <div className="flex items-center gap-3 min-w-0">
-                              <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                              <div className="w-10 h-10 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
                                 📦
                               </div>
                               <span className="font-medium text-gray-800 truncate">
@@ -306,7 +331,7 @@ export default function MyPosts() {
                                 value={currentStatus}
                                 onChange={(e) => handleStatusChange(item._id, e.target.value)}
                                 disabled={updatingItemId === item._id}
-                                className={`px-3 py-2 rounded-md border text-sm font-medium outline-none min-w-[120px] ${
+                                className={`px-3 py-2 rounded-md border text-sm font-medium outline-none min-w-30 ${
                                   updatingItemId === item._id
                                     ? "bg-gray-100 text-gray-400 border-gray-200 cursor-wait"
                                     : "bg-white text-gray-700 border-gray-300"
@@ -363,10 +388,10 @@ export default function MyPosts() {
                 return (
                   <div key={item._id} className="bg-white rounded-xl shadow p-4 sm:p-5 space-y-4">
                     <div className="flex items-start gap-3">
-                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
                         📦
                       </div>
-                      <h2 className="font-semibold text-gray-800 text-base sm:text-lg break-words">
+                      <h2 className="font-semibold text-gray-800 text-base sm:text-lg wrap-break-word">
                         {item.itemTitle || item.title || item.itemName || "No Title"}
                       </h2>
                     </div>

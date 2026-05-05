@@ -11,7 +11,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   if (!item) return null;
 
-  //  Current user
   let user = null;
   try {
     user = JSON.parse(localStorage.getItem("user") || "null");
@@ -36,7 +35,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     );
   };
 
-  //  Owner / reporter check 
   const isReportUser =
     matchesCurrentUser(item?.reportedBy?._id, item?.reportedBy?.email) ||
     matchesCurrentUser(item?.reportedBy?.id, item?.reportedBy?.email) ||
@@ -48,14 +46,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   const canChangeStatus = isReportUser;
 
-  // Claimed state (Found ≠ Claimed) 
   const getInitialClaimState = (it) => {
-    const status =
-      it?.itemStatus ||
-      it?.status ||
-      it?.type ||
-      "";
-
+    const status = it?.itemStatus || it?.status || it?.type || "";
     const normalized = String(status).toLowerCase();
     return normalized === "claimed" || normalized === "claim";
   };
@@ -71,22 +63,10 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
   useEffect(() => {
     setHasSubmittedClaim(false);
     setIsChecked(false);
+    setWasUpdated(false);
   }, [item?._id]);
 
-  //  Claimed users list 
   const claimedUsers = useMemo(() => {
-    const hasAnyClaimField =
-      item?.claimedBy ||
-      item?.claimedUsers ||
-      item?.claimUsers ||
-      item?.claimRequests ||
-      item?.claimRequestedBy ||
-      item?.claimedByUser ||
-      item?.claimer ||
-      item?.claimants;
-
-    if (!hasAnyClaimField) return [];
-
     const rawSources = [
       item?.claimedBy,
       item?.claimedUsers,
@@ -100,14 +80,29 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
     const flattened = rawSources.flatMap((source) => {
       if (!source) return [];
-      if (Array.isArray(source)) return source;
-      return [source];
+      return Array.isArray(source) ? source : [source];
     });
 
     const normalized = flattened
       .map((u, index) => ({
-        _id: String(u?._id || u?.id || `fallback-${index}`),
-        id: String(u?.id || u?._id || `fallback-${index}`),
+        _id: String(
+          u?._id ||
+            u?.id ||
+            u?.user?._id ||
+            u?.user?.id ||
+            u?.requestedBy?._id ||
+            u?.requestedBy?.id ||
+            `fallback-${index}`
+        ),
+        id: String(
+          u?.id ||
+            u?._id ||
+            u?.user?.id ||
+            u?.user?._id ||
+            u?.requestedBy?.id ||
+            u?.requestedBy?._id ||
+            `fallback-${index}`
+        ),
         name:
           u?.name ||
           u?.fullName ||
@@ -116,11 +111,9 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
           u?.requestedBy?.name ||
           u?.user?.name ||
           "",
-        email:
-          u?.email ||
-          u?.requestedBy?.email ||
-          u?.user?.email ||
-          "",
+        email: String(
+          u?.email || u?.requestedBy?.email || u?.user?.email || ""
+        ).toLowerCase(),
         contactNumber:
           u?.contactNumber ||
           u?.phone ||
@@ -129,36 +122,41 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
           u?.user?.contactNumber ||
           "",
       }))
-      .filter((u) => u.name || u.email || u.contactNumber);
+      .filter((u) => u._id || u.email);
 
-    const uniqueUsers = normalized.filter((user, index, self) => {
-      return (
-        index ===
-        self.findIndex(
-          (u) =>
-            (u._id && u._id === user._id) ||
-            (u.email && u.email === user.email)
-        )
-      );
-    });
+    // same id => only one user
+    const uniqueUsers = Array.from(
+      new Map(
+        normalized
+          .filter((u) => u._id && !u._id.startsWith("fallback-"))
+          .map((u) => [u._id, u])
+      ).values()
+    );
 
     const withoutOwner = uniqueUsers.filter((u) => {
       const isCurrentUser = matchesCurrentUser(u._id, u.email);
+
       const isReportedBy =
-        item?.reportedBy &&
-        (String(item.reportedBy._id) === u._id ||
-          item.reportedBy.email === u.email);
+        (String(item?.reportedBy?._id || item?.reportedBy?.id || "") ===
+          u._id &&
+          !!u._id) ||
+        (String(item?.reportedBy?.email || "").toLowerCase() === u.email &&
+          !!u.email);
+
       const isPostedBy =
-        item?.postedBy &&
-        (String(item.postedBy._id) === u._id ||
-          item.postedBy.email === u.email);
-      const isItemEmailOwner = item?.email && item.email === u.email;
+        (String(item?.postedBy?._id || item?.postedBy?.id || "") === u._id &&
+          !!u._id) ||
+        (String(item?.postedBy?.email || "").toLowerCase() === u.email &&
+          !!u.email);
+
+      const isItemEmailOwner =
+        String(item?.email || "").toLowerCase() === u.email && !!u.email;
 
       return !(isCurrentUser || isReportedBy || isPostedBy || isItemEmailOwner);
     });
 
     return withoutOwner;
-  }, [item, matchesCurrentUser]);
+  }, [item, currentUserId, currentUserEmail]);
 
   const isClaimRequester = claimedUsers.some(
     (claimUser) =>
@@ -166,9 +164,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
       matchesCurrentUser(claimUser?.id, claimUser?.email)
   );
 
-  //  UI flags 
   const showClaimRequestedBySection =
-    isClaimed && claimedUsers.length > 0 && canChangeStatus; 
+    isClaimed && claimedUsers.length > 0 && canChangeStatus;
 
   const showClaimRequesterMessage =
     !canChangeStatus && isClaimed && (isClaimRequester || hasSubmittedClaim);
@@ -178,7 +175,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   const showOwnerClaimBanner = canChangeStatus && isClaimed;
 
-  //  Actions
   const handleSubmitClaim = async () => {
     try {
       setIsSubmitting(true);
@@ -226,14 +222,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
     }
   };
 
-  //  Status badges 
   const getDisplayStatus = (it) => {
-    const status =
-      it?.itemStatus ||
-      it?.status ||
-      it?.type ||
-      "POSTED";
-
+    const status = it?.itemStatus || it?.status || it?.type || "POSTED";
     const rawStatus = String(status).toUpperCase();
     return rawStatus === "CLAIMED" ? "CLAIM" : rawStatus;
   };
@@ -248,9 +238,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
   const currentStatus = isClaimed ? "CLAIM" : getDisplayStatus(item);
 
-  //  Render 
   return (
-    <div className="w-full max-w-[400px] rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease]">
+    <div className="w-full max-w-100 rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease]">
       <button
         onClick={onClose}
         className="absolute top-2.5 right-2.5 w-8 h-8 bg-white shadow-md rounded-full flex items-center justify-center z-20 hover:bg-gray-50 transition text-xs"
@@ -306,7 +295,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 flex flex-col gap-3">
-            {/* Owner / Contact */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shadow-inner text-sm">
@@ -340,7 +328,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             </div>
 
-            {/* Claim requested by (only for owner) */}
             {showClaimRequestedBySection && claimedUsers.length > 0 && (
               <div className="flex flex-col gap-2 border-t border-green-200 pt-3 bg-green-50/50 -mx-3 px-3 rounded-b-lg">
                 <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">
@@ -349,7 +336,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 
                 {claimedUsers.map((claimUser, index) => (
                   <div
-                    key={`${claimUser?._id || claimUser?.id || claimUser?.email || "user"}-${index}`}
+                    key={claimUser?._id || claimUser?.id || claimUser?.email || index}
                     className="flex items-center justify-between gap-3 bg-white/80 border border-green-100 rounded-lg px-2 py-2"
                   >
                     <div className="flex items-center gap-2.5">
@@ -379,7 +366,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
-            {/* Owner controls */}
             {canChangeStatus && (
               <div className="flex flex-col gap-2 border-t border-blue-100 pt-3">
                 <div className="flex items-center justify-between gap-3">
@@ -396,6 +382,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
                           item.name ||
                           "User"}
                       </p>
+
                       <p className="text-[11px] text-gray-500 break-all">
                         {item.reportedBy?.email ||
                           item.postedBy?.email ||
@@ -438,7 +425,8 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
-            {/* Claim form for normal users */}
+            {/* if() */}
+
             {!canChangeStatus && !isClaimed && (
               <div className="flex flex-col gap-3">
                 <label className="flex items-center gap-2 text-xs text-gray-600 cursor-pointer">
@@ -464,7 +452,6 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
               </div>
             )}
 
-            {/* Messages */}
             {showClaimRequesterMessage && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
                 <p className="text-xs font-bold text-green-700 text-center">
