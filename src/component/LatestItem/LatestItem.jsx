@@ -23,18 +23,14 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 		}
 	}
 
-	const isItemClaimed = (item) => {
-		const status = (item.itemStatus || item.status || '').toUpperCase()
-		return status === 'CLAIMED' || item.find === true
-	}
-
 	const getStatusInfo = (item) => {
 		const status = (item.itemStatus || item.type || item.status || 'POSTED').toUpperCase()
 
-		let colorClass = 'bg-gray-100 text-gray-600'
-		if (status === 'FOUND') colorClass = 'bg-green-100 text-green-600'
-		if (status === 'LOST') colorClass = 'bg-red-100 text-red-600'
-		if (status === 'CLAIMED') colorClass = 'bg-yellow-100 text-yellow-700'
+		let colorClass = 'bg-gray-100 text-gray-700 border-gray-200'
+		if (status === 'FOUND') colorClass = 'bg-emerald-100 text-emerald-700 border-emerald-200'
+		if (status === 'LOST') colorClass = 'bg-rose-100 text-rose-700 border-rose-200'
+		if (status === 'CLAIMED' || status === 'CLAIM')
+			colorClass = 'bg-amber-100 text-amber-700 border-amber-200'
 
 		return { label: status, className: colorClass }
 	}
@@ -57,17 +53,19 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 	const visibleItems = items.slice(0, 6)
 
 	return (
-		<section className="bg-gray-100 py-10 px-4 md:px-8 min-h-screen relative">
+		<section className="bg-gray-50 py-12 px-4 md:px-8 min-h-screen relative">
 			<div
 				className={`max-w-7xl mx-auto flex flex-col transition-all duration-300 ${
 					selectedItem ? 'blur-sm' : ''
 				}`}
 			>
 				<div className="text-center mb-10">
-					<span className="text-blue-600 bg-blue-100 px-4 py-1 rounded-full text-sm font-medium uppercase tracking-wide">
+					<span className="text-blue-600 bg-blue-100/50 border border-blue-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
 						Recent Listings
 					</span>
-					<h2 className="text-3xl md:text-5xl font-bold text-gray-800 mt-3">Latest Items</h2>
+					<h2 className="text-2xl md:text-4xl font-extrabold text-gray-900 mt-3 tracking-tight">
+						Latest Items
+					</h2>
 				</div>
 
 				<div className="grow">
@@ -81,17 +79,16 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 						<div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
 							{visibleItems.map((item) => {
 								const status = getStatusInfo(item)
-								const claimed = isItemClaimed(item)
 
 								return (
 									<div
 										key={item._id}
 										onClick={() => handleCardClick(item)}
-										className="group cursor-pointer bg-white rounded-2xl shadow-sm overflow-hidden hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
+										className="group flex flex-col cursor-pointer bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 overflow-hidden"
 									>
-										<div className="bg-blue-50 h-48 flex items-center justify-center relative">
+										<div className="relative h-44 w-full bg-gray-50 flex items-center justify-center overflow-hidden p-3 border-b border-gray-50">
 											<span
-												className={`absolute top-4 left-4 z-10 text-[10px] font-bold px-3 py-1 rounded-full uppercase ${status.className}`}
+												className={`absolute top-3 left-3 z-10 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border shadow-sm ${status.className}`}
 											>
 												{status.label}
 											</span>
@@ -100,10 +97,10 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 												<img
 													src={item.image}
 													alt={item.title || 'item'}
-													className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+													className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300 ease-out"
 												/>
 											) : (
-												<div className="text-6xl group-hover:scale-110 transition-transform duration-300">
+												<div className="text-6xl drop-shadow-sm group-hover:scale-105 transition-transform duration-300 ease-out">
 													{item.category === 'Electronics'
 														? '📱'
 														: item.category === 'ID Cards'
@@ -113,45 +110,90 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 											)}
 										</div>
 
-										<div className="p-6">
-											<h3 className="text-xl font-bold text-gray-800 truncate">
+										<div className="flex flex-col flex-grow p-4 md:p-5">
+											<h3 className="text-lg font-bold text-gray-900 line-clamp-1 mb-1.5">
 												{item.itemTitle || item.itemName || item.title || 'Untitled Item'}
 											</h3>
 
-											<p className="text-sm text-gray-500 mt-2 line-clamp-2 min-h-10">
-												{item.description}
+											<p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow">
+												{item.description || 'No description provided.'}
 											</p>
 
-											<div className="text-xs text-gray-400 mt-4 space-y-1 font-medium">
-												<p>📍 {item.location}</p>
-												<p>
-													📅{' '}
-													{item.createdAt
-														? new Date(item.createdAt).toLocaleDateString()
-														: 'Recently'}
-												</p>
+											<div className="flex flex-col gap-2 text-xs text-gray-500 font-medium mb-4">
+												<div className="flex items-center gap-1.5">
+													<svg
+														className="w-3.5 h-3.5 text-gray-400"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth="2"
+															d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+														></path>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth="2"
+															d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+														></path>
+													</svg>
+													<span className="truncate">{item.location || 'Unknown Location'}</span>
+												</div>
+												<div className="flex items-center gap-1.5">
+													<svg
+														className="w-3.5 h-3.5 text-gray-400"
+														fill="none"
+														stroke="currentColor"
+														viewBox="0 0 24 24"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth="2"
+															d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+														></path>
+													</svg>
+													<span>
+														{item.createdAt
+															? new Date(item.createdAt).toLocaleDateString(undefined, {
+																	year: 'numeric',
+																	month: 'short',
+																	day: 'numeric',
+																})
+															: 'Recently'}
+													</span>
+												</div>
 											</div>
 
-											<div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
+											<div className="flex items-center justify-between pt-3 border-t border-gray-100 mt-auto">
 												<div className="flex items-center gap-2">
-													<div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold uppercase ring-2 ring-blue-50">
-														{(item.name || item.postedBy?.name || 'U').charAt(0)}
+													<div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold">
+														{(item.name || item.postedBy?.name || 'U').charAt(0).toUpperCase()}
 													</div>
-													<span className="text-sm text-gray-700 font-medium truncate max-w-25">
+													<span className="text-xs text-gray-700 font-semibold truncate max-w-[100px]">
 														{item.name || item.postedBy?.name || 'User'}
 													</span>
 												</div>
 
-												<button
-													type="button"
-													onClick={(event) => {
-														event.stopPropagation()
-														handleCardClick(item)
-													}}
-													className="bg-blue-50 text-blue-600 px-4 py-2 rounded-lg text-xs font-bold group-hover:bg-blue-600 group-hover:text-white transition-colors"
-												>
-													View →
-												</button>
+												<div className="text-blue-600 text-xs font-bold flex items-center group-hover:text-blue-800 transition-colors">
+													View
+													<svg
+														className="w-3.5 h-3.5 ml-0.5 transform group-hover:translate-x-1 transition-transform"
+														fill="none"
+														viewBox="0 0 24 24"
+														stroke="currentColor"
+													>
+														<path
+															strokeLinecap="round"
+															strokeLinejoin="round"
+															strokeWidth="2"
+															d="M9 5l7 7-7 7"
+														/>
+													</svg>
+												</div>
 											</div>
 										</div>
 									</div>
@@ -162,12 +204,25 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 				</div>
 
 				{!loading && items.length > 0 && (
-					<div className="flex justify-center mt-16 mb-10">
+					<div className="flex justify-center mt-12 mb-8">
 						<button
 							onClick={() => navigate('/browse')}
-							className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold text-lg shadow-lg transition-all duration-300 active:scale-95"
+							className="group flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-full font-semibold text-sm shadow-md transition-all duration-300 active:scale-95"
 						>
-							View All Items <span className="text-xl">→</span>
+							View All Items
+							<svg
+								className="w-4 h-4 transform group-hover:translate-x-1 transition-transform"
+								fill="none"
+								viewBox="0 0 24 24"
+								stroke="currentColor"
+							>
+								<path
+									strokeLinecap="round"
+									strokeLinejoin="round"
+									strokeWidth="2"
+									d="M17 8l4 4m0 0l-4 4m4-4H3"
+								/>
+							</svg>
 						</button>
 					</div>
 				)}
@@ -176,11 +231,11 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 			{selectedItem && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center px-4">
 					<div
-						className="absolute inset-0 bg-black/30 backdrop-blur-md"
+						className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
 						onClick={() => setSelectedItem(null)}
 					></div>
 
-					<div className="relative z-50 w-full flex items-center justify-center">
+					<div className="relative z-50 w-full flex items-center justify-center animate-in fade-in zoom-in duration-200">
 						<ItemDetails
 							item={selectedItem}
 							onClose={() => setSelectedItem(null)}

@@ -17,6 +17,7 @@ import ProtectedRoute from './component/ProtectedRoute/ProtectedRoute'
 import ContactAdmin from './component/Footer/ContactAdmin'
 import FAQ from './component/Footer/FAQ'
 import PrivacyPolicy from './component/Footer/Privacy'
+import Footer from './component/Footer/Footer'
 
 function App() {
 	return (
@@ -52,6 +53,7 @@ function App() {
 				{/* <Route path="/login" element={<Login />} /> */}
 				{/* <Route path="/signup" element={<Signup />} /> */}
 			</Routes>
+			<Footer />
 		</BrowserRouter>
 	)
 }
