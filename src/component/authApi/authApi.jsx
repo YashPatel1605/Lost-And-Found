@@ -26,8 +26,15 @@ export const resetPassword = (token, password) => {
 	return apiClient.post(`/auth/reset-password`, { token, password })
 }
 
-export const getAllItems = (params = {}) => {
-	return apiClient.get('/items', { params })
+// export const getAllItems = (params = {}) => {
+// 	return apiClient.get('/items', { params })
+// }
+
+export const getAllItems = (params = {}, signal) => {
+  return apiClient.get('/items', {
+    params,
+    signal,
+  })
 }
 
 export const getItemById = (id) => {
@@ -67,4 +74,8 @@ export const markItemAsClaimed = async (id, isClaiming = true) => {
 
 export const contactAdmin = (data) => {
 	return apiClient.post('/contacts', data)
+}
+
+export const getDashboardStats = () => {
+	return apiClient.get('/items/dashboard-stats')
 }

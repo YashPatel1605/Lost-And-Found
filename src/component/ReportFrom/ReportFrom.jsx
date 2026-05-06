@@ -92,7 +92,7 @@ export default function ReportForm({ selectedType }) {
       toast.success("Report submitted successfully! 🎉");
 
       setTimeout(() => {
-        window.location.href = "/";
+        window.location.href = "/browse";
       }, 2000);
     } catch (err) {
       console.error("❌ Submit Error:", err.response?.data || err.message);
@@ -259,7 +259,7 @@ export default function ReportForm({ selectedType }) {
         <button
           type="submit"
           disabled={loading}
-          className="w-full mt-8 bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50"
+          className="w-full mt-8 bg-blue-600 text-white font-semibold py-3 rounded-xl hover:bg-blue-700 transition disabled:opacity-50 cursor-pointer"
         >
           {loading ? "Submitting..." : "Submit Report"}
         </button>

@@ -110,12 +110,12 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 											)}
 										</div>
 
-										<div className="flex flex-col flex-grow p-4 md:p-5">
+										<div className="flex flex-col grow p-4 md:p-5">
 											<h3 className="text-lg font-bold text-gray-900 line-clamp-1 mb-1.5">
 												{item.itemTitle || item.itemName || item.title || 'Untitled Item'}
 											</h3>
 
-											<p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow">
+											<p className="text-sm text-gray-500 line-clamp-2 mb-4 grow">
 												{item.description || 'No description provided.'}
 											</p>
 
@@ -173,7 +173,7 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 													<div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold">
 														{(item.name || item.postedBy?.name || 'U').charAt(0).toUpperCase()}
 													</div>
-													<span className="text-xs text-gray-700 font-semibold truncate max-w-[100px]">
+													<span className="text-xs text-gray-700 font-semibold truncate max-w-25">
 														{item.name || item.postedBy?.name || 'User'}
 													</span>
 												</div>

@@ -14,7 +14,7 @@ export default function SimpleEffective() {
           Reuniting students with their belongings in 4 easy steps.
         </p>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4 cursor-pointer">
           <div className="flex flex-col items-center p-8 bg-white border border-slate-100 rounded-3xl shadow-sm transition-transform hover:scale-105">
             <div className="flex items-center justify-center w-12 h-12 mb-6 text-xl font-black text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-200">
               1
@@ -30,7 +30,7 @@ export default function SimpleEffective() {
           </div>
 
           <div className="flex flex-col items-center p-8 bg-white border border-slate-100 rounded-3xl shadow-sm transition-transform hover:scale-105">
-            <div className="flex items-center justify-center w-12 h-12 mb-6 text-xl font-black text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-200">
+            <div className="flex items-center justify-center w-12 h-12 mb-6 text-xl font-black text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-200 ">
               2
             </div>
             <div className="mb-4 text-4xl">🔍</div>
@@ -58,7 +58,7 @@ export default function SimpleEffective() {
           </div>
 
           <div className="flex flex-col items-center p-8 bg-white border border-slate-100 rounded-3xl shadow-sm transition-transform hover:scale-105">
-            <div className="flex items-center justify-center w-12 h-12 mb-6 text-xl font-black text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-200">
+            <div className="flex items-center justify-center w-12 h-12 mb-6 text-xl font-black text-white bg-blue-500 rounded-xl shadow-lg shadow-blue-200 ">
               4
             </div>
             <div className="mb-4 text-4xl">✅</div>

@@ -31,7 +31,7 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 		return { label: status, className: colorClass }
 	}
 
-	const fetchItems = useCallback(async (currentStatus, page = 1, isBackground = false) => {
+	const fetchItems = useCallback(async (currentStatus, page = 1, search = '', dateFilterValue = 'All Dates', isBackground = false) => {
 		if (abortControllerRef.current) {
 			abortControllerRef.current.abort()
 		}
@@ -50,6 +50,18 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 			const normalized = currentStatus.toLowerCase()
 			if (['found', 'lost', 'claim'].includes(normalized)) {
 				params.type = normalized
+			}
+
+			const trimmedSearch = (search || '').trim()
+			if (trimmedSearch) {
+				params.search = trimmedSearch
+				params.query = trimmedSearch
+				params.q = trimmedSearch
+			}
+
+			const normalizedDateFilter = (dateFilterValue || '').trim()
+			if (normalizedDateFilter && normalizedDateFilter !== 'All Dates') {
+				params.dateFilter = normalizedDateFilter
 			}
 
 			const res = await getAllItems(params, controller.signal)
@@ -74,62 +86,80 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 
 	useEffect(() => {
 		setCurrentPage(1)
-		fetchItems(statusFilter, 1)
-	}, [statusFilter, fetchItems])
+	}, [statusFilter, searchQuery, dateFilter])
 
 	useEffect(() => {
-		fetchItems(statusFilter, currentPage)
-	}, [currentPage, statusFilter, fetchItems])
+		fetchItems(statusFilter, currentPage, searchQuery, dateFilter)
+	}, [currentPage, statusFilter, searchQuery, dateFilter, fetchItems])
 
 	const handlePageChange = (newPage) => {
 		setCurrentPage(newPage)
 		window.scrollTo({ top: 0, behavior: 'smooth' })
 	}
 
+	// const filteredData = useMemo(() => {
+	// 	return items.filter((item) => {
+	// 		if (dateFilter === 'All Dates') return true
+
+	// 		const dateStr = item.createdAt || item.date
+	// 		if (!dateStr) return false
+	// 		const itemDate = new Date(dateStr)
+	// 		const now = new Date()
+
+	// 		if (dateFilter === 'Today') return itemDate.toDateString() === now.toDateString()
+	// 		if (dateFilter === 'This Week') {
+	// 			const weekAgo = new Date()
+	// 			weekAgo.setDate(now.getDate() - 7)
+	// 			return itemDate >= weekAgo
+	// 		}
+	// 		if (dateFilter === 'This Month') {
+	// 			return (
+	// 				itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()
+	// 			)
+	// 		}
+	// 		return true
+	// 	})
+	// }, [items, dateFilter])
+
 	const filteredData = useMemo(() => {
-		const normalizedSearch = (searchQuery || '').trim().toLowerCase()
+    const now = new Date()
 
-		return items.filter((item) => {
-			if (normalizedSearch) {
-				const searchFields = [
-					item.itemTitle,
-					item.itemName,
-					item.title,
-					item.name,
-					item.description,
-					item.location,
-					item.type,
-				]
-				const matchesSearch = searchFields.some(
-					(field) =>
-						field !== null &&
-						field !== undefined &&
-						String(field).toLowerCase().includes(normalizedSearch),
-				)
-				if (!matchesSearch) return false
-			}
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
 
-			if (dateFilter === 'All Dates') return true
+    const startOfWeek = new Date(now)
+    const day = startOfWeek.getDay()
+    const diffToMonday = day === 0 ? 6 : day - 1
+    startOfWeek.setDate(now.getDate() - diffToMonday)
+    startOfWeek.setHours(0, 0, 0, 0)
 
-			const dateStr = item.createdAt || item.date
-			if (!dateStr) return false
-			const itemDate = new Date(dateStr)
-			const now = new Date()
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 7)
 
-			if (dateFilter === 'Today') return itemDate.toDateString() === now.toDateString()
-			if (dateFilter === 'This Week') {
-				const weekAgo = new Date()
-				weekAgo.setDate(now.getDate() - 7)
-				return itemDate >= weekAgo
-			}
-			if (dateFilter === 'This Month') {
-				return (
-					itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear()
-				)
-			}
-			return true
-		})
-	}, [items, searchQuery, dateFilter])
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+
+    return items.filter((item) => {
+        if (dateFilter === 'All Dates') return true
+
+        const dateStr = item.createdAt || item.date
+        if (!dateStr) return false
+
+        const itemDate = new Date(dateStr)
+        if (isNaN(itemDate.getTime())) return false
+
+        switch (dateFilter) {
+            case 'Today':
+                return itemDate >= startOfToday && itemDate < endOfToday
+            case 'This Week':
+                return itemDate >= startOfWeek && itemDate < endOfWeek
+            case 'This Month':
+                return itemDate >= startOfMonth && itemDate < endOfMonth
+            default:
+                return true
+        }
+    })
+}, [items, dateFilter])
 
 	const handleCardClick = (item) => {
 		const token = localStorage.getItem('token')
@@ -145,7 +175,7 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 		if (updatedItem?._id) {
 			setItems((prev) => prev.map((it) => (it._id === updatedItem._id ? updatedItem : it)))
 		} else {
-			fetchItems(statusFilter, currentPage, true)
+			fetchItems(statusFilter, currentPage, searchQuery, dateFilter, true)
 		}
 	}
 
@@ -245,12 +275,12 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 										)}
 									</div>
 
-									<div className="flex flex-col flex-grow p-5">
+									<div className="flex flex-col grow p-5">
 										<h3 className="text-lg font-bold text-gray-900 line-clamp-1 mb-1.5">
 											{item.itemTitle || item.itemName || item.title || 'Untitled Item'}
 										</h3>
 
-										<p className="text-sm text-gray-500 line-clamp-2 mb-4 flex-grow">
+										<p className="text-sm text-gray-500 line-clamp-2 mb-4 grow">
 											{item.description || 'No description provided.'}
 										</p>
 
@@ -308,7 +338,7 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 												<div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-[10px] font-bold">
 													{(item.name || item.postedBy?.name || 'U').charAt(0).toUpperCase()}
 												</div>
-												<span className="text-xs text-gray-700 font-semibold truncate max-w-[100px]">
+												<span className="text-xs text-gray-700 font-semibold truncate max-w-25">
 													{item.name || item.postedBy?.name || 'User'}
 												</span>
 											</div>

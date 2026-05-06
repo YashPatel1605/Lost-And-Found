@@ -449,7 +449,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 	}
 
 	return (
-		<div className="w-full max-w-100 rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease]">
+		<div className="w-full max-w-100 rounded-xl overflow-hidden shadow-xl relative bg-white animate-[fadeIn_.25s_ease] mx-auto">
 			<button
 				onClick={onClose}
 				className="absolute top-2.5 right-2.5 w-8 h-8 bg-white shadow-md rounded-full flex items-center justify-center z-20 hover:bg-gray-50 transition text-xs"
@@ -536,7 +536,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 										</p>
 
 										<div className="flex items-center gap-2.5 bg-white/80 border border-gray-100 rounded-lg px-2 py-2">
-											<div className="w-9 h-9 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+											<div className="w-9 h-9 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
 												{(item.reportedBy?.name || 'U').charAt(0).toUpperCase()}
 											</div>
 											<div className="flex-1 min-w-0">
@@ -545,7 +545,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 														{item.reportedBy?.name || 'User'}
 													</p>
 													{item.reportedBy?.contactNumber && (
-														<p className="text-[11px] text-gray-700 whitespace-nowrap flex-shrink-0">
+														<p className="text-[11px] text-gray-700 whitespace-nowrap shrink-0">
 															📞 {item.reportedBy.contactNumber}
 														</p>
 													)}
@@ -660,7 +660,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 											🔍 Already Reported By
 										</p>
 										<div className="flex items-center gap-2.5 bg-white/80 border border-gray-100 rounded-lg px-2 py-2">
-											<div className="w-9 h-9 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0">
+											<div className="w-9 h-9 rounded-full bg-purple-500 text-white flex items-center justify-center font-bold text-sm shrink-0">
 												{(item.reportedBy?.name || 'U').charAt(0).toUpperCase()}
 											</div>
 											<div className="flex-1 min-w-0">
@@ -669,7 +669,7 @@ export default function ItemDetails({ item, onClose, refreshItems }) {
 														{item.reportedBy?.name || 'User'}
 													</p>
 													{item.reportedBy?.contactNumber && (
-														<p className="text-[11px] text-gray-500 whitespace-nowrap flex-shrink-0">
+														<p className="text-[11px] text-gray-500 whitespace-nowrap shrink-0">
 															📞 {item.reportedBy.contactNumber}
 														</p>
 													)}

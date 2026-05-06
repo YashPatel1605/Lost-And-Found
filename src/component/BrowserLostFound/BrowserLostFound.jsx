@@ -46,7 +46,7 @@ export default function BrowserLostFound({ onSearch }) {
 
           <button
             onClick={handleSearch}
-            className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-xl"
+            className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 transition duration-200 text-white font-semibold rounded-xl cursor-pointer"
           >
             Search
           </button>

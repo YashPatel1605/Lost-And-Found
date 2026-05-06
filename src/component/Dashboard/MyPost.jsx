@@ -264,7 +264,7 @@ export default function MyPosts() {
 						</div>
 						<button
 							onClick={() => navigate('/report')}
-							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto whitespace-nowrap"
+							className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg w-full sm:w-auto whitespace-nowrap cursor-pointer"
 						>
 							+ New Report
 						</button>
