@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import LoginModal from '../../Modal/LoginModal'
 import ItemDetails from '../../Modal/ItemDetails'
@@ -11,6 +11,16 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 	const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 	const [selectedItem, setSelectedItem] = useState(null)
 	const [pendingItem, setPendingItem] = useState(null)
+
+	useEffect(() => {
+		if (selectedItem && items.length > 0) {
+			const updatedItem = items.find((i) => i._id === selectedItem._id)
+
+			if (updatedItem) {
+				setSelectedItem(updatedItem)
+			}
+		}
+	}, [items])
 
 	const handleCardClick = (item) => {
 		const token = localStorage.getItem('token')
@@ -43,11 +53,8 @@ export default function LatestItems({ items = [], loading = false, onItemUpdate 
 		}
 	}
 
-	const handleItemRefresh = (updatedItemFromChild = null) => {
-		if (updatedItemFromChild?._id) {
-			setSelectedItem(updatedItemFromChild)
-			if (onItemUpdate) onItemUpdate(updatedItemFromChild)
-		}
+	const handleItemRefresh = () => {
+		onItemUpdate()
 	}
 
 	const visibleItems = items.slice(0, 6)

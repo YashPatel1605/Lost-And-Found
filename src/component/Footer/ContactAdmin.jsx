@@ -35,7 +35,7 @@ export default function ContactAdmin() {
 			const response = await contactAdmin(formData)
 			const result = response.data
 
-			console.log('Backend Response:', result)
+			//	console.log('Backend Response:', result)
 
 			if (result.error || result.statusCode >= 400) {
 				throw new Error(result.message || 'Failed to send message')
@@ -66,7 +66,7 @@ export default function ContactAdmin() {
 			<div className="max-w-6xl mx-auto">
 				<div className="text-center mb-12">
 					<h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-						Contact <span className="text-teal-700">Admin</span>
+						Contact <span className="text-blue-500">Admin</span>
 					</h1>
 					<p className="mt-4 text-base sm:text-lg text-slate-600 max-w-2xl mx-auto leading-7">
 						Need help with a disputed claim or have questions about a lost item? Our admin team is
@@ -93,7 +93,7 @@ export default function ContactAdmin() {
 										value={formData.fullName}
 										onChange={handleChange}
 										placeholder="John Doe"
-										className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none transition"
+										className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
 									/>
 								</div>
 
@@ -112,7 +112,7 @@ export default function ContactAdmin() {
 										value={formData.email}
 										onChange={handleChange}
 										placeholder="john@example.com"
-										className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none transition"
+										className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
 									/>
 								</div>
 							</div>
@@ -129,7 +129,7 @@ export default function ContactAdmin() {
 									name="subject"
 									value={formData.subject}
 									onChange={handleChange}
-									className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none transition bg-white"
+									className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
 								>
 									<option>Claim Inquiry</option>
 									<option>Report Misuse</option>
@@ -154,7 +154,7 @@ export default function ContactAdmin() {
 									value={formData.message}
 									onChange={handleChange}
 									placeholder="Describe your issue in detail..."
-									className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-teal-600 focus:border-teal-600 outline-none transition resize-none"
+									className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none"
 								/>
 							</div>
 
@@ -162,7 +162,7 @@ export default function ContactAdmin() {
 								type="submit"
 								disabled={isSubmitting}
 								className={`w-full sm:w-auto px-8 py-4 rounded-xl font-semibold text-white flex items-center justify-center gap-2 transition ${
-									isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-teal-700 hover:bg-teal-800'
+									isSubmitting ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-500'
 								}`}
 							>
 								{isSubmitting ? 'Sending...' : 'Send Message'}
@@ -172,7 +172,7 @@ export default function ContactAdmin() {
 					</div>
 
 					<div className="space-y-6">
-						<div className="bg-teal-700 rounded-3xl p-8 text-white shadow-lg">
+						<div className="bg-blue-500 rounded-3xl p-8 text-white shadow-lg">
 							<h3 className="text-xl font-bold mb-6">Contact Information</h3>
 							<div className="space-y-6">
 								<div className="flex items-start gap-4">
@@ -181,7 +181,10 @@ export default function ContactAdmin() {
 									</div>
 									<div>
 										<p className="font-semibold">Main Office</p>
-										<p className="text-sm text-teal-100">Campus Security Wing, Block B, Floor 1</p>
+										<p className="text-sm text-blue-100">
+											Raj laxmi Plaza, Bilimora - Chikhli Rd, Goharbaug, Sankalp Society, Bilimora,
+											Gujarat 396321
+										</p>
 									</div>
 								</div>
 
@@ -191,7 +194,7 @@ export default function ContactAdmin() {
 									</div>
 									<div>
 										<p className="font-semibold">Phone</p>
-										<p className="text-sm text-teal-100">+1 (555) 000-1234</p>
+										<p className="text-sm text-blue-100">+91 86728 89988</p>
 									</div>
 								</div>
 
@@ -201,14 +204,14 @@ export default function ContactAdmin() {
 									</div>
 									<div>
 										<p className="font-semibold">Email</p>
-										<p className="text-sm text-teal-100">admin.lostfound@univ.edu</p>
+										<p className="text-sm text-blue-100">info@shivshaktisoftech.in</p>
 									</div>
 								</div>
 							</div>
 						</div>
 
 						<div className="bg-white rounded-3xl p-8 border border-slate-200 shadow-sm">
-							<div className="flex items-center gap-2 text-teal-700 mb-4">
+							<div className="flex items-center gap-2 text-blue-500 mb-4">
 								<MessageSquare size={20} />
 								<h4 className="font-bold">Quick Note</h4>
 							</div>

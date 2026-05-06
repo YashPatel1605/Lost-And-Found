@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom' // Import useNavigate
+import { useNavigate } from 'react-router-dom'
 import { ChevronDown, HelpCircle, Search, ShieldCheck, PhoneCall } from 'lucide-react'
 
 const faqData = [
@@ -48,7 +48,7 @@ function FAQItem({ item, index, openIndex, setOpenIndex }) {
 				>
 					<span
 						className={`text-base sm:text-lg font-semibold transition-colors ${
-							isOpen ? 'text-teal-700' : 'text-slate-800'
+							isOpen ? 'text-blue-500' : 'text-slate-800'
 						}`}
 					>
 						{item.question}
@@ -56,7 +56,7 @@ function FAQItem({ item, index, openIndex, setOpenIndex }) {
 
 					<span
 						className={`shrink-0 rounded-full p-2 transition-all ${
-							isOpen ? 'bg-teal-50 text-teal-700 rotate-180' : 'bg-slate-100 text-slate-500'
+							isOpen ? 'bg-blue-50 text-blue-500 rotate-180' : 'bg-slate-100 text-slate-500'
 						}`}
 					>
 						<ChevronDown className="w-5 h-5" />
@@ -84,9 +84,8 @@ function FAQItem({ item, index, openIndex, setOpenIndex }) {
 
 export default function FAQ() {
 	const [openIndex, setOpenIndex] = useState(0)
-	const navigate = useNavigate() // Initialize the navigate function
+	const navigate = useNavigate()
 
-	// Navigation handler
 	const handleContactClick = () => {
 		navigate('/contact')
 	}
@@ -99,10 +98,10 @@ export default function FAQ() {
 					<div className="lg:sticky lg:top-8 space-y-6">
 						<div className="rounded-3xl bg-slate-900 text-white p-8 shadow-lg">
 							<div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
-								<HelpCircle className="w-7 h-7 text-teal-300" />
+								<HelpCircle className="w-7 h-7 text-blue-300" />
 							</div>
 
-							<p className="text-sm font-semibold uppercase tracking-[0.16em] text-teal-300 mb-3">
+							<p className="text-sm font-semibold uppercase tracking-[0.16em] text-blue-300 mb-3">
 								Help Center
 							</p>
 
@@ -118,7 +117,7 @@ export default function FAQ() {
 							<div className="mt-8 grid gap-4">
 								<div className="rounded-2xl bg-white/5 border border-white/10 p-4">
 									<div className="flex items-center gap-3 mb-2">
-										<Search className="w-5 h-5 text-teal-300" />
+										<Search className="w-5 h-5 text-blue-300" />
 										<p className="font-semibold">Report and search faster</p>
 									</div>
 									<p className="text-sm text-slate-300 leading-6">
@@ -128,7 +127,7 @@ export default function FAQ() {
 
 								<div className="rounded-2xl bg-white/5 border border-white/10 p-4">
 									<div className="flex items-center gap-3 mb-2">
-										<ShieldCheck className="w-5 h-5 text-teal-300" />
+										<ShieldCheck className="w-5 h-5 text-blue-300" />
 										<p className="font-semibold">Safe claim verification</p>
 									</div>
 									<p className="text-sm text-slate-300 leading-6">
@@ -139,7 +138,7 @@ export default function FAQ() {
 						</div>
 
 						<div className="rounded-3xl bg-white border border-slate-200 p-6 shadow-sm">
-							<div className="flex items-center gap-3 mb-3 text-teal-700">
+							<div className="flex items-center gap-3 mb-3 text-blue-500">
 								<PhoneCall className="w-5 h-5" />
 								<h3 className="font-bold text-slate-900">Need direct help?</h3>
 							</div>
@@ -149,7 +148,7 @@ export default function FAQ() {
 							</p>
 							<button
 								onClick={handleContactClick}
-								className="mt-5 inline-flex items-center justify-center rounded-xl bg-teal-700 px-5 py-3 text-sm font-semibold text-white hover:bg-teal-800 transition-colors"
+								className="mt-5 inline-flex items-center justify-center rounded-xl bg-blue-500 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-800 transition-colors"
 							>
 								Contact Support
 							</button>
@@ -160,7 +159,7 @@ export default function FAQ() {
 					<div className="space-y-5">
 						<div className="rounded-3xl bg-white border border-slate-200 p-6 sm:p-8 shadow-sm">
 							<div className="mb-6">
-								<p className="text-sm font-semibold text-teal-700 uppercase tracking-[0.14em]">
+								<p className="text-sm font-semibold text-blue-500 uppercase tracking-[0.14em]">
 									Lost & Found FAQ
 								</p>
 								<h3 className="mt-2 text-2xl sm:text-3xl font-bold text-slate-900">
@@ -185,16 +184,16 @@ export default function FAQ() {
 							</div>
 						</div>
 
-						<div className="rounded-3xl bg-gradient-to-r from-teal-700 to-teal-800 p-6 sm:p-8 text-white shadow-lg">
+						<div className="rounded-3xl bg-gradient-to-r from-blue-500 to-blue-500 p-6 sm:p-8 text-white shadow-lg">
 							<h3 className="text-xl sm:text-2xl font-bold">Still have questions?</h3>
-							<p className="mt-3 text-teal-50 leading-7 max-w-2xl">
+							<p className="mt-3 text-blue-50 leading-7 max-w-2xl">
 								If your issue involves a disputed claim, sensitive item, or urgent recovery request,
 								contact the support team with your item ID and report date.
 							</p>
 							<div className="mt-6">
 								<button
 									onClick={handleContactClick}
-									className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-teal-800 hover:bg-slate-100 transition-colors"
+									className="rounded-xl bg-white px-6 py-3 text-sm font-semibold text-blue-500 hover:bg-slate-100 transition-colors"
 								>
 									Contact Admin
 								</button>
