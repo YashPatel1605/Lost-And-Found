@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { getAllItems } from '../authApi/authApi'
 import SkeletonCard from '../SkeletonCard/SkeletonCard'
@@ -121,45 +121,45 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 	// 	})
 	// }, [items, dateFilter])
 
-	const filteredData = useMemo(() => {
-    const now = new Date()
+	// const filteredData = useMemo(() => {
+	//     const now = new Date()
 
-    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
+	//     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+	//     const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1)
 
-    const startOfWeek = new Date(now)
-    const day = startOfWeek.getDay()
-    const diffToMonday = day === 0 ? 6 : day - 1
-    startOfWeek.setDate(now.getDate() - diffToMonday)
-    startOfWeek.setHours(0, 0, 0, 0)
+	//     const startOfWeek = new Date(now)
+	//     const day = startOfWeek.getDay()
+	//     const diffToMonday = day === 0 ? 6 : day - 1
+	//     startOfWeek.setDate(now.getDate() - diffToMonday)
+	//     startOfWeek.setHours(0, 0, 0, 0)
 
-    const endOfWeek = new Date(startOfWeek)
-    endOfWeek.setDate(startOfWeek.getDate() + 7)
+	//     const endOfWeek = new Date(startOfWeek)
+	//     endOfWeek.setDate(startOfWeek.getDate() + 7)
 
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
+	//     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+	//     const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1)
 
-    return items.filter((item) => {
-        if (dateFilter === 'All Dates') return true
+	//     return items.filter((item) => {
+	//         if (dateFilter === 'All Dates') return true
 
-        const dateStr = item.createdAt || item.date
-        if (!dateStr) return false
+	//         const dateStr = item.createdAt || item.date
+	//         if (!dateStr) return false
 
-        const itemDate = new Date(dateStr)
-        if (isNaN(itemDate.getTime())) return false
+	//         const itemDate = new Date(dateStr)
+	//         if (isNaN(itemDate.getTime())) return false
 
-        switch (dateFilter) {
-            case 'Today':
-                return itemDate >= startOfToday && itemDate < endOfToday
-            case 'This Week':
-                return itemDate >= startOfWeek && itemDate < endOfWeek
-            case 'This Month':
-                return itemDate >= startOfMonth && itemDate < endOfMonth
-            default:
-                return true
-        }
-    })
-}, [items, dateFilter])
+	//         switch (dateFilter) {
+	//             case 'Today':
+	//                 return itemDate >= startOfToday && itemDate < endOfToday
+	//             case 'This Week':
+	//                 return itemDate >= startOfWeek && itemDate < endOfWeek
+	//             case 'This Month':
+	//                 return itemDate >= startOfMonth && itemDate < endOfMonth
+	//             default:
+	//                 return true
+	//         }
+	//     })
+	// }, [items, dateFilter])
 
 	const handleCardClick = (item) => {
 		const token = localStorage.getItem('token')
@@ -241,8 +241,8 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 						Array(6)
 							.fill(0)
 							.map((_, i) => <SkeletonCard key={i} />)
-					) : filteredData.length > 0 ? (
-						filteredData.map((item) => {
+					) : items.length > 0 ? (
+						items.map((item) => {
 							const status = getStatusInfo(item)
 
 							return (

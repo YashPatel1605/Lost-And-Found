@@ -33,7 +33,8 @@ export default function BrowserLostFound({ onSearch }) {
           
           <input
             type="text"
-            placeholder="Search by title, description, location..."
+            // placeholder="Search by title, description, location..."
+             placeholder="Search by title, description..."
             value={inputValue}
             onChange={(event) => {
               const value = event.target.value;
