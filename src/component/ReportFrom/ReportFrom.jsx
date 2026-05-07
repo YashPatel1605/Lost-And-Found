@@ -35,8 +35,8 @@ export default function ReportForm({ selectedType }) {
 		const selectedFile = e.target.files[0]
 		if (!selectedFile) return
 
-		if (!['image/png', 'image/jpeg', 'image/jpg'].includes(selectedFile.type)) {
-			toast.error('Only PNG and JPG images are allowed ❌')
+		if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(selectedFile.type)) {
+			toast.error('Only PNG, JPG, JPEG, and WEBP images are allowed ')
 			return
 		}
 
