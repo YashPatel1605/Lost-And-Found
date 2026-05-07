@@ -31,58 +31,73 @@ export default function BrowserAllItem({ searchQuery = '' }) {
 		return { label: status, className: colorClass }
 	}
 
-	const fetchItems = useCallback(async (currentStatus, page = 1, search = '', dateFilterValue = 'All Dates', isBackground = false) => {
-		if (abortControllerRef.current) {
-			abortControllerRef.current.abort()
-		}
-
-		const controller = new AbortController()
-		abortControllerRef.current = controller
-
-		try {
-			if (!isBackground) setLoading(true)
-
-			const params = {
-				page: page,
-				limit: 10,
+	const fetchItems = useCallback(
+		async (
+			currentStatus,
+			page = 1,
+			search = '',
+			dateFilterValue = 'All Dates',
+			isBackground = false,
+		) => {
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort()
 			}
 
-			const normalized = currentStatus.toLowerCase()
-			if (['found', 'lost', 'claim'].includes(normalized)) {
-				params.type = normalized
+			const controller = new AbortController()
+			abortControllerRef.current = controller
+
+			try {
+				if (!isBackground) setLoading(true)
+
+				const params = {
+					page: page,
+					limit: 10,
+				}
+
+				const normalized = currentStatus.toLowerCase()
+				if (['found', 'lost', 'claim'].includes(normalized)) {
+					params.type = normalized
+				}
+
+				const trimmedSearch = (search || '').trim()
+				if (trimmedSearch) {
+					params.search = trimmedSearch
+					params.query = trimmedSearch
+					params.q = trimmedSearch
+				}
+
+				const normalizedDateFilter = (dateFilterValue || '').trim()
+
+				if (normalizedDateFilter && normalizedDateFilter !== 'All Dates') {
+					if (normalizedDateFilter === 'Today') {
+						params.dateFilter = 'today'
+					} else if (normalizedDateFilter === 'This Week') {
+						params.dateFilter = 'week'
+					} else if (normalizedDateFilter === 'This Month') {
+						params.dateFilter = 'month'
+					}
+				}
+				const res = await getAllItems(params, controller.signal)
+
+				const fetchedData = res.data?.data?.items || res.data?.items || []
+				const paginationInfo = res.data?.data?.pagination || res.data?.pagination
+
+				setItems(Array.isArray(fetchedData) ? fetchedData : [])
+
+				if (paginationInfo) {
+					setTotalPages(paginationInfo.totalPages || 1)
+				}
+			} catch (error) {
+				if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
+					console.error('Fetch failed:', error)
+					if (!isBackground) toast.error('Could not load items')
+				}
+			} finally {
+				if (!isBackground) setLoading(false)
 			}
-
-			const trimmedSearch = (search || '').trim()
-			if (trimmedSearch) {
-				params.search = trimmedSearch
-				params.query = trimmedSearch
-				params.q = trimmedSearch
-			}
-
-			const normalizedDateFilter = (dateFilterValue || '').trim()
-			if (normalizedDateFilter && normalizedDateFilter !== 'All Dates') {
-				params.dateFilter = normalizedDateFilter
-			}
-
-			const res = await getAllItems(params, controller.signal)
-
-			const fetchedData = res.data?.data?.items || res.data?.items || []
-			const paginationInfo = res.data?.data?.pagination || res.data?.pagination
-
-			setItems(Array.isArray(fetchedData) ? fetchedData : [])
-
-			if (paginationInfo) {
-				setTotalPages(paginationInfo.totalPages || 1)
-			}
-		} catch (error) {
-			if (error.name !== 'CanceledError' && error.name !== 'AbortError') {
-				console.error('Fetch failed:', error)
-				if (!isBackground) toast.error('Could not load items')
-			}
-		} finally {
-			if (!isBackground) setLoading(false)
-		}
-	}, [])
+		},
+		[],
+	)
 
 	useEffect(() => {
 		setCurrentPage(1)
