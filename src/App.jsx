@@ -3,15 +3,9 @@ import Navbar from './component/NavBar/NavBar'
 import Home from './component/Home/Home'
 import Browse from './component/Browser/Browser'
 import Report from './component/Report/Report'
-// import Login from "./component/Login/Login";
-import LoginModal from './Modal/LoginModal'
-// import Signup from "./component/Signup/Signup";
 import { ToastContainer } from 'react-toastify'
-// import ItemDetails from "./component/ItemDetails/ItemDetails";
-import ItemDetails from './Modal/ItemDetails'
 import MyPosts from './component/Dashboard/MyPost'
 import EditItem from './component/EditItem/EditItem'
-// import ResetPassword from "./component/ResetPassword/ResetPassword";
 import ResetPassword from './component/ResetPassword/ResetPassword'
 import ProtectedRoute from './component/ProtectedRoute/ProtectedRoute'
 import ContactAdmin from './component/Footer/ContactAdmin'
@@ -49,9 +43,7 @@ function App() {
 				<Route path="/contact" element={<ContactAdmin />} />
 				<Route path="/faq" element={<FAQ />} />
 				<Route path="/privacy" element={<PrivacyPolicy />} />
-
-				{/* <Route path="/login" element={<Login />} /> */}
-				{/* <Route path="/signup" element={<Signup />} /> */}
+				<Route path="*" element={<Navigate to="/" replace />} />
 			</Routes>
 			<Footer />
 		</BrowserRouter>
